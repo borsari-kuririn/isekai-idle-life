@@ -17,6 +17,7 @@ function gameNewHeroState(): array
             'weapon' => null,
             'armor' => null,
         ],
+        'battle' => null,
         'log' => ['A new life in a medieval isekai begins.'],
     ];
 }
@@ -137,6 +138,7 @@ function gameHandleAction(?string $action, array $request, array $classDefinitio
         $hero['max_hp'] = 34;
         $hero['inventory'] = [];
         $hero['equipped'] = ['weapon' => null, 'armor' => null];
+        $hero['battle'] = null;
         $hero['log'] = ['Character created: ' . $hero['name'] . ' (' . $classDefinitions[$class]['name'] . ').'];
         return;
     }
@@ -152,6 +154,11 @@ function gameHandleAction(?string $action, array $request, array $classDefinitio
 
     if ($action === 'hunt') {
         $monster = $monsterPool[array_rand($monsterPool)];
+        $hero['battle'] = [
+            'monster' => $monster,
+            'current_hp' => (int) $monster['hp'],
+            'max_hp' => (int) $monster['hp'],
+        ];
         $stats = gameCalculateHeroStats($hero, $classDefinitions, $equipmentCatalog);
         $heroPower = ($stats['attack'] * 2) + $stats['defense'] + $stats['magic'] + $stats['speed'];
         $monsterPower = ($monster['attack'] * 2) + $monster['defense'] + $monster['magic'] + $monster['speed'];

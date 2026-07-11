@@ -4,11 +4,21 @@ A simple static PHP RPG with a medieval isekai theme, focused on monster farming
 
 ## Structure
 
-- Classes live in `src/Data/Classes.php`
-- Equipment lives in `src/Data/Equipment.php`
-- Monsters live in `src/Data/Monsters.php`
-- Game rules live in `src/Game/Engine.php`
-- The front controller stays in `index.php`
+- Front controller: `index.php`
+- MVC flow in `src/`:
+	- `src/Controller/GameController.php`
+	- `src/Model/GameDataProvider.php`
+	- `src/Model/HeroViewModelBuilder.php`
+	- `src/View/GameView.php`
+	- `src/View/templates/game.php`
+- Domain data:
+	- `src/Data/Classes.php`
+	- `src/Data/Equipment.php`
+	- `src/Data/Monsters.php`
+- Game rules engine: `src/Game/Engine.php`
+- Frontend assets:
+	- `Assets/css/app.css`
+	- `Assets/js/app.js`
 
 ## Features
 
