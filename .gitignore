@@ -1,0 +1,26 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor settings
+.vscode/
+.idea/
+*.code-workspace
+
+# PHP dependencies and build artifacts
+vendor/
+composer.lock
+.phpunit.result.cache
+coverage/
+
+# Runtime and temporary files
+*.log
+*.cache
+*.tmp
+*.bak
+*.swp
+
+# Environment files
+.env
+.env.*
+!.env.example
