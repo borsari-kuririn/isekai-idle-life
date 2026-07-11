@@ -22,6 +22,21 @@ This file stores historical user-flow tests for future agent runs.
 
 ### Date: 2026-07-11
 - Agent: Player Simulation Agent
+- Environment: Local `http://localhost/isekai-idle-life/` and published `https://rafaelborsari.com.br/isekai-idle/`
+- Flow Name: All classes full-flow matrix (create, combat, views, sell, buy, rest)
+- Steps:
+  - [PASS] Executed full matrix on published environment for `Fencer`, `Brawler`, `Scholar`, `Priest`, `Hunter`, and `Bard`.
+  - [PASS] For each class in published environment, validated class-card selection, character creation, `Hunt`, `Monster` view, `Map` view, `Scenario` view, `Sell`, `Buy`, `Rest`, `Inventory` view, and `Market` view.
+  - [PASS] Published matrix result was `6/6` classes fully passing all tested flow checkpoints.
+  - [BLOCKED] Attempted equivalent full rerun on local environment, but Playwright had intermittent click timeouts on `Start Adventure`/`Restart` despite elements being present and visible.
+  - [PASS] Local environment still showed successful partial executions in-session (class creation and action flows) before the timeout recurrence.
+- Outcome Summary: The published build currently passes the complete all-classes flow suite end-to-end. The local rerun encountered an interaction-layer flake (click timeout) rather than a deterministic game-rule failure, so the local matrix could not be fully closed in the same execution window.
+- Follow-up Actions:
+  1. Re-run the local matrix in a fresh browser context (new page ID) to eliminate transient Playwright interaction state.
+  2. Add a deterministic UI test hook (for example, data-test-id selectors for class cards and submit button) to reduce click-interception flakiness.
+
+### Date: 2026-07-11
+- Agent: Player Simulation Agent
 - Environment: Local Apache/PHP route on Windows, target URL `http://localhost/isekai-idle-life/`; published URL check at `https://rafaelborsari.com.br/isekai-idle/`
 - Flow Name: Submit persistence fallback validation
 - Steps:

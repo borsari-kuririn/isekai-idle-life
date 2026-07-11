@@ -1,40 +1,105 @@
 # Isekai Idle Life
 
-A simple static PHP RPG with a medieval isekai theme, focused on monster hunting, town selling, and one-shot style progression.
+## Executive Summary
 
-## Structure
+Isekai Idle Life is a session-based browser RPG implemented in PHP, designed as a lightweight, database-free experience centered on character progression, monster hunting, inventory economy, and time-based world simulation.
+
+The project follows a domain-oriented MVC organization and provides a complete gameplay loop with class identity, stat growth, market interactions, stamina management, and quarter-based day progression.
+
+## Functional Scope
+
+### 1. Character System
+
+- Character creation with mouse-selectable class cards.
+- Available classes:
+	- Fencer
+	- Brawler
+	- Scholar
+	- Priest
+	- Hunter
+	- Bard
+- Core attributes:
+	- Attack
+	- Defense
+	- Magic
+	- Speed
+- Class portrait support through mapped image assets.
+
+### 2. Combat and Progression
+
+- Hunt action with randomized encounters and battle outcomes.
+- Reward model with variable gold, XP, and loot drops.
+- Level progression with automatic HP scaling and incremental stat impact.
+- Dynamic combat viewer with enemy portrait, HP bar, and enemy stats.
+
+### 3. Economy and Equipment
+
+- Sell flow for loot conversion into gold.
+- Market flow for weapon and armor purchases.
+- Equipment slots:
+	- Weapon
+	- Armor
+- Equipment bonuses directly affect combat stat calculations.
+
+### 4. Stamina and World Time
+
+- Fixed stamina baseline: `100` (non-scalable cap).
+- Action stamina costs:
+	- Hunt: `3`
+	- Sell: `2`
+	- Buy: `1`
+	- Rest: `0` (with recovery effect)
+- World time model:
+	- Day quarters: `Morning`, `Day`, `Afternoon`, `Night`
+	- Every `30` stamina spent advances one quarter.
+	- `Rest` advances one full quarter and restores stamina to baseline.
+
+### 5. Persistence and Runtime Resilience
+
+- Primary persistence via PHP session.
+- Cookie fallback for hero state to handle environments with unstable session storage.
+- Front-controller routing via `.htaccess` to keep request flow consistent through `index.php`.
+
+## Architecture
+
+### Application Entry
 
 - Front controller: `index.php`
-- MVC flow in `src/`:
+
+### MVC Layers
+
+- Controller:
 	- `src/Controller/GameController.php`
+- Model:
 	- `src/Model/GameDataProvider.php`
 	- `src/Model/HeroViewModelBuilder.php`
+- View:
 	- `src/View/GameView.php`
 	- `src/View/templates/game.php`
+
+### Domain and Engine
+
 - Domain data:
 	- `src/Data/Classes.php`
 	- `src/Data/Equipment.php`
 	- `src/Data/Monsters.php`
-- Game rules engine: `src/Game/Engine.php`
-- Frontend assets:
+- Core game rules:
+	- `src/Game/Engine.php`
+
+### Frontend Assets
+
+- Styles:
 	- `Assets/css/app.css`
+- Behavior:
 	- `Assets/js/app.js`
+- Class portraits:
 	- `Assets/Classes/*.png`
+- Monster portraits:
+	- `Assets/Monsters/*.png`
 
-## Features
+## Class Image Mapping
 
-- Character creation with Fencer, Brawler, Scholar, Priest, Hunter, and Bard.
-- Core stats: Attack, Defense, Magic, and Speed.
-- Equipment slots for Weapon and Armor.
-- Monster hunting loop with loot drops.
-- Town selling and basic gold management.
-- World time cycle with 4 quarters per day (Morning, Day, Afternoon, Night).
-- Fixed stamina baseline at 100, with time advancing based on stamina spent and full-quarter rest.
-- Session-based state, no database required.
-
-## Class Images
-
-Drop class images in `Assets/Classes` using these mapped filenames:
+Store class icons in `Assets/Classes` with the following filenames:
 
 - `Fencer.png`
 - `Brawler.png`
@@ -43,19 +108,35 @@ Drop class images in `Assets/Classes` using these mapped filenames:
 - `Hunter.png`
 - `Bard.png`
 
-## Run Locally
+## Local Execution
 
-1. Open the project folder.
-2. Start PHP's built-in server:
+### Prerequisites
+
+- PHP 8+ with web server support.
+
+### Steps
+
+1. Open the repository in your local environment.
+2. Start a PHP server from project root:
 
 ```bash
 php -S localhost:8000
 ```
 
-3. Open `http://localhost:8000` in your browser.
+3. Access the game:
 
-## Visual Direction
+```text
+http://localhost:8000
+```
 
-- Light Game Boy Color inspired palette.
-- Soft green surfaces with stronger accent greens.
-- Clear contrast for text and cards.
+## Deployment Notes
+
+- Ensure Apache rewrite support is enabled (`mod_rewrite`).
+- Keep `.htaccess` deployed at project root.
+- Ensure PHP session storage is writable in production; cookie fallback is present as an additional safeguard.
+
+## Visual Guidelines
+
+- Light Game Boy Color-inspired interface.
+- High-contrast HUD and data readability.
+- Pixel-art friendly rendering for character and monster portraits.
