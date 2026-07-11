@@ -1,8 +1,25 @@
 <?php
 declare(strict_types=1);
 
+function gameBaseStamina(): int
+{
+    return 100;
+}
+
+function gameStaminaPerQuarter(): int
+{
+    return 30;
+}
+
+function gameTimeQuarterNames(): array
+{
+    return ['Morning', 'Day', 'Afternoon', 'Night'];
+}
+
 function gameNewHeroState(): array
 {
+    $baseStamina = gameBaseStamina();
+
     return [
         'created' => false,
         'name' => 'Adventurer',
@@ -12,6 +29,11 @@ function gameNewHeroState(): array
         'gold' => 12,
         'hp' => 30,
         'max_hp' => 30,
+        'stamina' => $baseStamina,
+        'max_stamina' => $baseStamina,
+        'day' => 1,
+        'day_quarter' => 0,
+        'quarter_stamina_spent' => 0,
         'inventory' => [],
         'equipped' => [
             'weapon' => null,
@@ -32,6 +54,86 @@ function gameEnsureHero(): void
 function gameAppendLog(string $message): void
 {
     $_SESSION['hero']['log'] = array_slice(array_merge([date('H:i') . ' - ' . $message], $_SESSION['hero']['log'] ?? []), 0, 7);
+}
+
+function gameEnsureStaminaState(array &$hero): void
+{
+    $baseStamina = gameBaseStamina();
+    $hero['max_stamina'] = $baseStamina;
+
+    if (!isset($hero['stamina'])) {
+        $hero['stamina'] = $baseStamina;
+    }
+
+    $hero['stamina'] = (int) max(0, min($baseStamina, (int) $hero['stamina']));
+}
+
+function gameEnsureTimeState(array &$hero): void
+{
+    if (!isset($hero['day']) || (int) $hero['day'] < 1) {
+        $hero['day'] = 1;
+    }
+
+    if (!isset($hero['day_quarter'])) {
+        $hero['day_quarter'] = 0;
+    }
+
+    $hero['day_quarter'] = ((int) $hero['day_quarter']) % 4;
+    if ((int) $hero['day_quarter'] < 0) {
+        $hero['day_quarter'] = 0;
+    }
+
+    if (!isset($hero['quarter_stamina_spent']) || (int) $hero['quarter_stamina_spent'] < 0) {
+        $hero['quarter_stamina_spent'] = 0;
+    }
+
+    $hero['quarter_stamina_spent'] = (int) min(gameStaminaPerQuarter() - 1, (int) $hero['quarter_stamina_spent']);
+}
+
+function gameAdvanceTimeQuarters(array &$hero, int $quarters = 1): void
+{
+    gameEnsureTimeState($hero);
+
+    if ($quarters <= 0) {
+        return;
+    }
+
+    for ($i = 0; $i < $quarters; $i++) {
+        $hero['day_quarter']++;
+        if ((int) $hero['day_quarter'] >= 4) {
+            $hero['day_quarter'] = 0;
+            $hero['day'] = max(1, (int) $hero['day'] + 1);
+        }
+    }
+}
+
+function gameSpendStaminaAndAdvanceTime(array &$hero, int $staminaCost): void
+{
+    gameEnsureStaminaState($hero);
+    gameEnsureTimeState($hero);
+
+    if ($staminaCost <= 0) {
+        return;
+    }
+
+    $hero['stamina'] = (int) max(0, (int) $hero['stamina'] - $staminaCost);
+    $hero['quarter_stamina_spent'] += $staminaCost;
+
+    $staminaPerQuarter = gameStaminaPerQuarter();
+    while ((int) $hero['quarter_stamina_spent'] >= $staminaPerQuarter) {
+        $hero['quarter_stamina_spent'] -= $staminaPerQuarter;
+        gameAdvanceTimeQuarters($hero, 1);
+    }
+}
+
+function gameGetWorldTimeLabel(array $hero): string
+{
+    $day = max(1, (int) ($hero['day'] ?? 1));
+    $quarter = (int) ($hero['day_quarter'] ?? 0);
+    $quarterNames = gameTimeQuarterNames();
+    $quarterName = $quarterNames[$quarter] ?? $quarterNames[0];
+
+    return 'Day ' . $day . ' - ' . $quarterName;
 }
 
 function gameGetEquippedItemStats(array $equipmentCatalog, ?string $itemId): array
@@ -136,6 +238,11 @@ function gameHandleAction(?string $action, array $request, array $classDefinitio
         $hero['gold'] = 20;
         $hero['hp'] = 34;
         $hero['max_hp'] = 34;
+        $hero['stamina'] = gameBaseStamina();
+        $hero['max_stamina'] = gameBaseStamina();
+        $hero['day'] = 1;
+        $hero['day_quarter'] = 0;
+        $hero['quarter_stamina_spent'] = 0;
         $hero['inventory'] = [];
         $hero['equipped'] = ['weapon' => null, 'armor' => null];
         $hero['battle'] = null;
@@ -150,6 +257,26 @@ function gameHandleAction(?string $action, array $request, array $classDefinitio
 
     if (empty($hero['created'])) {
         return;
+    }
+
+    gameEnsureStaminaState($hero);
+    gameEnsureTimeState($hero);
+
+    $actionStaminaCost = [
+        'hunt' => 3,
+        'sell' => 2,
+        'buy' => 1,
+        'rest' => 0,
+    ];
+
+    $staminaCost = $actionStaminaCost[$action] ?? null;
+    if ($staminaCost !== null && $hero['stamina'] < $staminaCost) {
+        gameAppendLog('Not enough stamina to perform this action.');
+        return;
+    }
+
+    if ($staminaCost !== null && $staminaCost > 0) {
+        gameSpendStaminaAndAdvanceTime($hero, $staminaCost);
     }
 
     if ($action === 'hunt') {
@@ -196,10 +323,19 @@ function gameHandleAction(?string $action, array $request, array $classDefinitio
 
     if ($action === 'rest') {
         $cost = 4;
+        $bardRestBonus = 2;
         if ($hero['gold'] >= $cost) {
             $hero['gold'] -= $cost;
             $hero['hp'] = $hero['max_hp'];
+            $hero['stamina'] = $hero['max_stamina'];
+            $hero['quarter_stamina_spent'] = 0;
+            gameAdvanceTimeQuarters($hero, 1);
             gameAppendLog('You rested in town and fully recovered.');
+
+            if (($hero['class'] ?? '') === 'bard') {
+                $hero['gold'] += $bardRestBonus;
+                gameAppendLog('Bard bonus: +' . $bardRestBonus . ' gold from your performance in town.');
+            }
         } else {
             gameAppendLog('Not enough gold to rest.');
         }

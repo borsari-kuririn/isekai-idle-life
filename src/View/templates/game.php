@@ -22,12 +22,21 @@ function renderItemStats(array $stats): string
 <body>
 <div class="wrap">
     <section class="hero-banner">
-        <h1>Isekai Idle Life</h1>
+        <div class="hero-banner-row">
+            <h1>Isekai Idle Life</h1>
+            <?php if (!empty($hero['created'])): ?>
+                <div class="world-time-banner" aria-label="World time">
+                    <span>TIME</span>
+                    <strong><?= htmlspecialchars((string) ($worldTimeLabel ?? 'Day 1 - Morning')) ?></strong>
+                </div>
+            <?php endif; ?>
+        </div>
     </section>
 
     <?php if (empty($hero['created'])): ?>
         <section class="card panel">
             <h2>Create Character</h2>
+            <?php $defaultClassId = (string) (array_key_first($classDefinitions) ?? 'fencer'); ?>
             <form method="post" class="panel">
                 <input type="hidden" name="action" value="create">
                 <div class="form-row">
@@ -35,37 +44,64 @@ function renderItemStats(array $stats): string
                         Hero Name
                         <input type="text" name="name" maxlength="20" placeholder="Example: Ryu, Aira, Kael">
                     </label>
-                    <label>
+                    <div class="class-selected-chip">
                         Starting Class
-                        <select name="class">
-                            <?php foreach ($classDefinitions as $id => $class): ?>
-                                <option value="<?= htmlspecialchars($id) ?>"><?= htmlspecialchars($class['name']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </label>
+                        <strong>Click a class card below</strong>
+                    </div>
                 </div>
+
+                <div class="two-col">
+                    <?php foreach ($classDefinitions as $id => $class): ?>
+                    <?php
+                        $classFaceImage = (string) ($class['image'] ?? '');
+                        $classPreviewImage = str_replace('_Face.png', '.png', $classFaceImage);
+                    ?>
+                    <label class="item-card class-card class-card-select" for="class-<?= htmlspecialchars($id) ?>">
+                        <input
+                            class="class-radio"
+                            type="radio"
+                            name="class"
+                            id="class-<?= htmlspecialchars($id) ?>"
+                            value="<?= htmlspecialchars($id) ?>"
+                            <?= $id === $defaultClassId ? 'checked' : '' ?>
+                        >
+                        <div class="class-portrait" aria-hidden="true">
+                            <img src="<?= htmlspecialchars($classPreviewImage) ?>" alt="<?= htmlspecialchars((string) ($class['name'] ?? 'Class')) ?> portrait" onerror="this.onerror=null;this.src='<?= htmlspecialchars($classFaceImage) ?>';">
+                        </div>
+                        <div class="class-copy">
+                            <strong class="class-name"><?= htmlspecialchars($class['name']) ?></strong>
+                            <small class="class-desc"><?= htmlspecialchars($class['description']) ?></small>
+                            <small class="class-base">
+                                <strong>Base attributes</strong>
+                                <span class="class-attr"><strong>Attack:</strong> <?= (int) $class['stats']['attack'] ?></span>
+                                <span class="class-attr"><strong>Defense:</strong> <?= (int) $class['stats']['defense'] ?></span>
+                                <span class="class-attr"><strong>Magic:</strong> <?= (int) $class['stats']['magic'] ?></span>
+                                <span class="class-attr"><strong>Speed:</strong> <?= (int) $class['stats']['speed'] ?></span>
+                            </small>
+                        </div>
+                    </label>
+                    <?php endforeach; ?>
+                </div>
+
                 <div class="btn-row">
                     <button type="submit">Start Adventure</button>
                 </div>
             </form>
-
-            <div class="two-col">
-                <?php foreach ($classDefinitions as $class): ?>
-                    <article class="item-card">
-                        <strong><?= htmlspecialchars($class['name']) ?></strong>
-                        <small><?= htmlspecialchars($class['description']) ?></small>
-                        <small>Attack <?= (int) $class['stats']['attack'] ?> | Defense <?= (int) $class['stats']['defense'] ?> | Magic <?= (int) $class['stats']['magic'] ?> | Speed <?= (int) $class['stats']['speed'] ?></small>
-                    </article>
-                <?php endforeach; ?>
-            </div>
         </section>
     <?php else: ?>
         <section class="dashboard">
             <div class="card panel">
-                <h2 class="hero-identity">
-                    <span class="hero-name"><?= htmlspecialchars((string) ($hero['name'] ?? 'Adventurer')) ?></span>
-                    <span class="hero-class">Class: <?= htmlspecialchars((string) ($classInfo['name'] ?? 'Fencer')) ?></span>
-                </h2>
+                <div class="hero-head">
+                    <div class="class-portrait class-portrait-hero" aria-hidden="true">
+                        <img src="<?= htmlspecialchars((string) ($classInfo['image'] ?? '')) ?>" alt="<?= htmlspecialchars((string) ($classInfo['name'] ?? 'Class')) ?> portrait" onerror="this.style.display='none'">
+                    </div>
+                    <h2 class="hero-identity">
+                        <span class="hero-name"><?= htmlspecialchars((string) ($hero['name'] ?? 'Adventurer')) ?></span>
+                        <span class="hero-class">Class: <?= htmlspecialchars((string) ($classInfo['name'] ?? 'Fencer')) ?></span>
+                        <span class="hero-title">Title: <?= htmlspecialchars((string) ($heroTitle ?? 'Novice Adventurer')) ?></span>
+                        <small class="hero-desc"><?= htmlspecialchars((string) ($classInfo['description'] ?? '')) ?></small>
+                    </h2>
+                </div>
                 <div class="status-block">
                     <div class="status-primary">
                         <div class="hud-bar dark" style="--fill: <?= $hpPercent ?>%;">
@@ -76,6 +112,10 @@ function renderItemStats(array $stats): string
                             <div class="hud-fill"></div>
                             <div class="hud-meta"><span>XP</span><strong><?= (int) $hero['exp'] ?>/<?= $xpToNext ?></strong></div>
                         </div>
+                        <div class="hud-bar dark" style="--fill: <?= $staminaPercent ?>%;">
+                            <div class="hud-fill"></div>
+                            <div class="hud-meta"><span>STAMINA</span><strong><?= (int) $hero['stamina'] ?>/<?= (int) $hero['max_stamina'] ?></strong></div>
+                        </div>
                     </div>
                     <div class="status-meta">
                         <div class="meta-chip"><span>LEVEL</span><strong><?= (int) $hero['level'] ?></strong></div>
@@ -83,7 +123,6 @@ function renderItemStats(array $stats): string
                         <div class="meta-chip"><span>BAG</span><strong><?= $inventoryCount ?></strong></div>
                     </div>
                 </div>
-                <p><?= htmlspecialchars((string) ($classInfo['description'] ?? '')) ?></p>
 
                 <div class="stats">
                     <div class="stat"><span>Attack</span><strong><?= (int) $heroStats['attack'] ?></strong></div>
@@ -109,7 +148,7 @@ function renderItemStats(array $stats): string
                 <div class="btn-row">
                     <form method="post">
                         <input type="hidden" name="action" value="hunt">
-                        <button type="submit">Farm</button>
+                        <button type="submit">Hunt</button>
                     </form>
                     <form method="post">
                         <input type="hidden" name="action" value="rest">
@@ -234,15 +273,26 @@ function renderItemStats(array $stats): string
                 <div class="tab-panel" data-panel="inventory">
                     <div class="inventory">
                         <?php if ($inventoryCount === 0): ?>
-                            <div class="item-card">No loot yet. Go farm monsters outside town.</div>
+                            <div class="item-card">No loot yet. Go hunt monsters outside town.</div>
                         <?php else: ?>
-                            <?php foreach ($hero['inventory'] as $item): ?>
-                                <div class="item-card">
-                                    <strong><?= htmlspecialchars((string) ($item['name'] ?? 'Item')) ?></strong>
-                                    <small>Type: <?= htmlspecialchars((string) ($item['type'] ?? 'unknown')) ?></small>
-                                    <small>Sell value: <?= (int) ($item['value'] ?? 0) ?> gold</small>
-                                </div>
-                            <?php endforeach; ?>
+                            <table class="inventory-table">
+                                <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Type</th>
+                                    <th>Sell value</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <?php foreach ($hero['inventory'] as $item): ?>
+                                    <tr>
+                                        <td><?= htmlspecialchars((string) ($item['name'] ?? 'Item')) ?></td>
+                                        <td><?= htmlspecialchars((string) ($item['type'] ?? 'unknown')) ?></td>
+                                        <td><?= (int) ($item['value'] ?? 0) ?> gold</td>
+                                    </tr>
+                                <?php endforeach; ?>
+                                </tbody>
+                            </table>
                         <?php endif; ?>
                     </div>
                 </div>

@@ -1,6 +1,6 @@
 # Isekai Idle Life
 
-A simple static PHP RPG with a medieval isekai theme, focused on monster farming, town selling, and one-shot style progression.
+A simple static PHP RPG with a medieval isekai theme, focused on monster hunting, town selling, and one-shot style progression.
 
 ## Structure
 
@@ -19,15 +19,29 @@ A simple static PHP RPG with a medieval isekai theme, focused on monster farming
 - Frontend assets:
 	- `Assets/css/app.css`
 	- `Assets/js/app.js`
+	- `Assets/Classes/*.png`
 
 ## Features
 
-- Character creation with Fencer, Brawler, Scholar, and Priest.
+- Character creation with Fencer, Brawler, Scholar, Priest, Hunter, and Bard.
 - Core stats: Attack, Defense, Magic, and Speed.
 - Equipment slots for Weapon and Armor.
-- Monster farming loop with loot drops.
+- Monster hunting loop with loot drops.
 - Town selling and basic gold management.
+- World time cycle with 4 quarters per day (Morning, Day, Afternoon, Night).
+- Fixed stamina baseline at 100, with time advancing based on stamina spent and full-quarter rest.
 - Session-based state, no database required.
+
+## Class Images
+
+Drop class images in `Assets/Classes` using these mapped filenames:
+
+- `Fencer.png`
+- `Brawler.png`
+- `Scholar.png`
+- `Priest.png`
+- `Hunter.png`
+- `Bard.png`
 
 ## Run Locally
 
