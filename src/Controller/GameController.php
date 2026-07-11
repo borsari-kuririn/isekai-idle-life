@@ -34,6 +34,10 @@ final class GameController
         $_SESSION['hero']['day_quarter'] = $hero['day_quarter'];
         $_SESSION['hero']['quarter_stamina_spent'] = $hero['quarter_stamina_spent'];
 
+        // Session is the primary state storage; cookie keeps a fallback copy
+        // for hosts where PHP session storage is unstable between requests.
+        gamePersistHeroToCookie($_SESSION['hero']);
+
         $heroStats = gameCalculateHeroStats($hero, $classDefinitions, $equipmentCatalog);
         $classInfo = $classDefinitions[$hero['class']] ?? $classDefinitions['fencer'];
         $heroTitle = $this->resolveHeroTitle($hero, $classInfo);

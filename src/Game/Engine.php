@@ -16,6 +16,60 @@ function gameTimeQuarterNames(): array
     return ['Morning', 'Day', 'Afternoon', 'Night'];
 }
 
+function gameHeroStateCookieName(): string
+{
+    return 'isekai_hero_state';
+}
+
+function gameReadHeroFromCookie(): ?array
+{
+    $raw = $_COOKIE[gameHeroStateCookieName()] ?? null;
+    if (!is_string($raw) || $raw === '') {
+        return null;
+    }
+
+    $decoded = json_decode($raw, true);
+    if (!is_array($decoded)) {
+        return null;
+    }
+
+    return $decoded;
+}
+
+function gamePersistHeroToCookie(array $hero): void
+{
+    $cookiePath = rtrim(str_replace('\\', '/', dirname((string) ($_SERVER['SCRIPT_NAME'] ?? '/'))), '/');
+    if ($cookiePath === '') {
+        $cookiePath = '/';
+    }
+
+    $isSecure = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+
+    setcookie(gameHeroStateCookieName(), json_encode($hero), [
+        'expires' => time() + 60 * 60 * 24 * 14,
+        'path' => $cookiePath,
+        'secure' => $isSecure,
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
+}
+
+function gameClearHeroCookie(): void
+{
+    $cookiePath = rtrim(str_replace('\\', '/', dirname((string) ($_SERVER['SCRIPT_NAME'] ?? '/'))), '/');
+    if ($cookiePath === '') {
+        $cookiePath = '/';
+    }
+
+    setcookie(gameHeroStateCookieName(), '', [
+        'expires' => time() - 3600,
+        'path' => $cookiePath,
+        'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
+}
+
 function gameNewHeroState(): array
 {
     $baseStamina = gameBaseStamina();
@@ -47,6 +101,12 @@ function gameNewHeroState(): array
 function gameEnsureHero(): void
 {
     if (!isset($_SESSION['hero']) || !is_array($_SESSION['hero'])) {
+        $cookieHero = gameReadHeroFromCookie();
+        if (is_array($cookieHero)) {
+            $_SESSION['hero'] = $cookieHero;
+            return;
+        }
+
         $_SESSION['hero'] = gameNewHeroState();
     }
 }

@@ -22,6 +22,20 @@ This file stores historical user-flow tests for future agent runs.
 
 ### Date: 2026-07-11
 - Agent: Player Simulation Agent
+- Environment: Local Apache/PHP route on Windows, target URL `http://localhost/isekai-idle-life/`; published URL check at `https://rafaelborsari.com.br/isekai-idle/`
+- Flow Name: Submit persistence fallback validation
+- Steps:
+  - [PASS] Reproduced local submit flow and confirmed action loop remains in gameplay state after `Hunt` (no reset to character creation).
+  - [PASS] Reproduced published submit flow and observed post-submit return to `Create Character`, indicating state persistence failure in the deployed environment.
+  - [PASS] Added cookie-based hero-state fallback in engine/controller and validated local submit cycle remains stable with persistent hero progression.
+  - [PASS] Confirmed fallback is transparent to normal session behavior and does not change core game actions.
+- Outcome Summary: The reset-on-submit issue is tied to unstable server-side session persistence on the deployed host. A cookie-backed fallback was added in code so hero state can persist across submits even when PHP session storage fails.
+- Follow-up Actions:
+  1. Deploy the updated build to `https://rafaelborsari.com.br/isekai-idle/` and retest submit actions in production.
+  2. Verify server session storage permissions/path as a long-term fix while keeping cookie fallback as resilience.
+
+### Date: 2026-07-11
+- Agent: Player Simulation Agent
 - Environment: Local Apache/PHP route on Windows, target URL `http://localhost/isekai-idle-life/`
 - Flow Name: Time quarter progression by stamina spend and rest
 - Steps:
