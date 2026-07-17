@@ -228,3 +228,16 @@ This file stores historical user-flow tests for future agent runs.
 - Follow-up Actions:
   1. Add a defeated-state visual if you later introduce multi-turn combat.
   2. Add one more smoke test after changing the monster roster to keep the viewer mapping current.
+
+### Date: 2026-07-17
+- Agent: Player Simulation Agent
+- Environment: Local Apache/PHP route on Windows, target URL `http://localhost/isekai-idle-life/`
+- Flow Name: Bag capacity and expansion smoke check
+- Steps:
+  - [PASS] Loaded the create-character screen and confirmed the flow was reachable.
+  - [BLOCKED] Attempted Playwright submit through `Start Adventure`, but the click action timed out despite the button being visible and enabled in snapshot.
+  - [BLOCKED] Could not complete in-browser assertion for `BAG x/20 -> x/25` within the same run due to the intermittent submit click timeout.
+- Outcome Summary: The gameplay smoke check for bag capacity display and expansion was attempted but blocked by a recurring UI automation flake on `Start Adventure` interaction. This prevented end-to-end runtime verification in the current execution window.
+- Follow-up Actions:
+  1. Re-run the smoke check in a fresh page/context and submit via form-level action (for example Enter on hero name input) to bypass click interception.
+  2. Add deterministic test selectors on submit and bag chip to make automated validation more robust.

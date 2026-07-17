@@ -28,11 +28,13 @@ final class GameController
         $_SESSION['hero']['class'] = $hero['class'];
         gameEnsureStaminaState($hero);
         gameEnsureTimeState($hero);
+        gameEnsureBagState($hero);
         $_SESSION['hero']['stamina'] = $hero['stamina'];
         $_SESSION['hero']['max_stamina'] = $hero['max_stamina'];
         $_SESSION['hero']['day'] = $hero['day'];
         $_SESSION['hero']['day_quarter'] = $hero['day_quarter'];
         $_SESSION['hero']['quarter_stamina_spent'] = $hero['quarter_stamina_spent'];
+        $_SESSION['hero']['bag_capacity'] = $hero['bag_capacity'];
 
         // Session is the primary state storage; cookie keeps a fallback copy
         // for hosts where PHP session storage is unstable between requests.
@@ -44,6 +46,8 @@ final class GameController
         $weaponInfo = $hero['equipped']['weapon'] ? gameFindEquipment($hero['equipped']['weapon'], $equipmentCatalog) : null;
         $armorInfo = $hero['equipped']['armor'] ? gameFindEquipment($hero['equipped']['armor'], $equipmentCatalog) : null;
         $inventoryCount = count($hero['inventory']);
+        $bagCapacity = (int) ($hero['bag_capacity'] ?? gameBaseBagCapacity());
+        $bagUpgradeCost = gameGetBagUpgradeCost($hero);
 
         $battleView = $this->viewModelBuilder->getCurrentBattleMonster($hero, $monsterPool);
         $currentMonster = $battleView['monster']['name'] ?? null;
@@ -72,6 +76,8 @@ final class GameController
             'weaponInfo' => $weaponInfo,
             'armorInfo' => $armorInfo,
             'inventoryCount' => $inventoryCount,
+            'bagCapacity' => $bagCapacity,
+            'bagUpgradeCost' => $bagUpgradeCost,
             'sceneLabel' => $this->viewModelBuilder->detectSceneLabel($hero['log']),
             'currentMonster' => $currentMonster,
             'currentMonsterData' => $currentMonsterData,

@@ -11,6 +11,16 @@ function gameStaminaPerQuarter(): int
     return 30;
 }
 
+function gameBaseBagCapacity(): int
+{
+    return 20;
+}
+
+function gameBagUpgradeStep(): int
+{
+    return 5;
+}
+
 function gameTimeQuarterNames(): array
 {
     return ['Morning', 'Day', 'Afternoon', 'Night'];
@@ -73,6 +83,7 @@ function gameClearHeroCookie(): void
 function gameNewHeroState(): array
 {
     $baseStamina = gameBaseStamina();
+    $baseBagCapacity = gameBaseBagCapacity();
 
     return [
         'created' => false,
@@ -88,6 +99,7 @@ function gameNewHeroState(): array
         'day' => 1,
         'day_quarter' => 0,
         'quarter_stamina_spent' => 0,
+        'bag_capacity' => $baseBagCapacity,
         'inventory' => [],
         'equipped' => [
             'weapon' => null,
@@ -126,6 +138,27 @@ function gameEnsureStaminaState(array &$hero): void
     }
 
     $hero['stamina'] = (int) max(0, min($baseStamina, (int) $hero['stamina']));
+}
+
+function gameEnsureBagState(array &$hero): void
+{
+    $baseBagCapacity = gameBaseBagCapacity();
+
+    if (!isset($hero['bag_capacity']) || (int) $hero['bag_capacity'] < $baseBagCapacity) {
+        $hero['bag_capacity'] = $baseBagCapacity;
+    }
+
+    $hero['bag_capacity'] = (int) $hero['bag_capacity'];
+}
+
+function gameGetBagUpgradeCost(array $hero): int
+{
+    $baseBagCapacity = gameBaseBagCapacity();
+    $upgradeStep = gameBagUpgradeStep();
+    $currentCapacity = (int) ($hero['bag_capacity'] ?? $baseBagCapacity);
+    $tiers = (int) max(0, floor(($currentCapacity - $baseBagCapacity) / $upgradeStep));
+
+    return 15 + ($tiers * 10);
 }
 
 function gameEnsureTimeState(array &$hero): void
@@ -303,6 +336,7 @@ function gameHandleAction(?string $action, array $request, array $classDefinitio
         $hero['day'] = 1;
         $hero['day_quarter'] = 0;
         $hero['quarter_stamina_spent'] = 0;
+        $hero['bag_capacity'] = gameBaseBagCapacity();
         $hero['inventory'] = [];
         $hero['equipped'] = ['weapon' => null, 'armor' => null];
         $hero['battle'] = null;
@@ -321,11 +355,13 @@ function gameHandleAction(?string $action, array $request, array $classDefinitio
 
     gameEnsureStaminaState($hero);
     gameEnsureTimeState($hero);
+    gameEnsureBagState($hero);
 
     $actionStaminaCost = [
         'hunt' => 3,
         'sell' => 2,
         'buy' => 1,
+        'expand_bag' => 1,
         'rest' => 0,
     ];
 
@@ -359,16 +395,25 @@ function gameHandleAction(?string $action, array $request, array $classDefinitio
             $loot = $monster['loot'][array_rand($monster['loot'])];
 
             $hero['gold'] += $goldGain;
-            $hero['inventory'][] = [
-                'name' => $loot,
-                'type' => 'loot',
-                'value' => gameRandomRange([2, 7]),
-            ];
+
+            $lootAdded = false;
+            if (count($hero['inventory']) < (int) $hero['bag_capacity']) {
+                $hero['inventory'][] = [
+                    'name' => $loot,
+                    'type' => 'loot',
+                    'value' => gameRandomRange([2, 7]),
+                ];
+                $lootAdded = true;
+            }
 
             $leveledUp = gameGainExperience($hero, $xpGain);
             $hero['hp'] = max(1, $hero['hp'] - max(1, intdiv($damageTaken, 2)));
 
-            gameAppendLog('Victory over ' . $monster['name'] . '. +' . $goldGain . ' gold, +' . $xpGain . ' XP, item found: ' . $loot . '.');
+            if ($lootAdded) {
+                gameAppendLog('Victory over ' . $monster['name'] . '. +' . $goldGain . ' gold, +' . $xpGain . ' XP, item found: ' . $loot . '.');
+            } else {
+                gameAppendLog('Victory over ' . $monster['name'] . '. +' . $goldGain . ' gold, +' . $xpGain . ' XP. Bag is full, loot left behind.');
+            }
             if ($leveledUp) {
                 gameAppendLog('You leveled up. The isekai is getting less hostile.');
             }
@@ -419,6 +464,21 @@ function gameHandleAction(?string $action, array $request, array $classDefinitio
         $hero['inventory'] = $remainingInventory;
         $hero['gold'] += $goldEarned;
         gameAppendLog('Sold ' . $sold . ' loot items for ' . $goldEarned . ' gold in town.');
+        return;
+    }
+
+    if ($action === 'expand_bag') {
+        $upgradeStep = gameBagUpgradeStep();
+        $upgradeCost = gameGetBagUpgradeCost($hero);
+
+        if ($hero['gold'] >= $upgradeCost) {
+            $hero['gold'] -= $upgradeCost;
+            $hero['bag_capacity'] += $upgradeStep;
+            gameAppendLog('Bag expanded to ' . $hero['bag_capacity'] . ' slots for ' . $upgradeCost . ' gold.');
+        } else {
+            gameAppendLog('Not enough gold to expand bag. Need ' . $upgradeCost . ' gold.');
+        }
+
         return;
     }
 

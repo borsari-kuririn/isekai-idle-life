@@ -120,7 +120,7 @@ function renderItemStats(array $stats): string
                     <div class="status-meta">
                         <div class="meta-chip"><span>LEVEL</span><strong><?= (int) $hero['level'] ?></strong></div>
                         <div class="meta-chip"><span>GOLD</span><strong><?= (int) $hero['gold'] ?></strong></div>
-                        <div class="meta-chip"><span>BAG</span><strong><?= $inventoryCount ?></strong></div>
+                        <div class="meta-chip"><span>BAG</span><strong><?= $inventoryCount ?>/<?= (int) ($bagCapacity ?? gameBaseBagCapacity()) ?></strong></div>
                     </div>
                 </div>
 
@@ -236,6 +236,20 @@ function renderItemStats(array $stats): string
 
                 <div class="tab-panel active" data-panel="market">
                     <div class="shop">
+                        <h3>Utility</h3>
+                        <div class="shop-grid">
+                            <article class="item-card">
+                                <strong>Bag Upgrade</strong>
+                                <small>Current capacity: <?= (int) ($bagCapacity ?? gameBaseBagCapacity()) ?> slots</small>
+                                <small>Upgrade: +<?= gameBagUpgradeStep() ?> slots</small>
+                                <small>Price: <?= (int) ($bagUpgradeCost ?? gameGetBagUpgradeCost($hero)) ?> gold</small>
+                                <form method="post">
+                                    <input type="hidden" name="action" value="expand_bag">
+                                    <button type="submit">Expand Bag</button>
+                                </form>
+                            </article>
+                        </div>
+
                         <h3>Weapons</h3>
                         <div class="shop-grid">
                         <?php foreach ($equipmentCatalog['weapon'] as $id => $item): ?>

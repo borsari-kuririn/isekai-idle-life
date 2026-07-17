@@ -36,6 +36,7 @@ The project follows a domain-oriented MVC organization and provides a complete g
 
 - Sell flow for loot conversion into gold.
 - Market flow for weapon and armor purchases.
+- Bag system with default capacity of `20`, occupancy display (`current/max`), and paid expansion in the utility market.
 - Equipment slots:
 	- Weapon
 	- Armor
