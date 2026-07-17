@@ -59,6 +59,9 @@ final class GameController
         $staminaPercent = (int) max(0, min(100, (($hero['max_stamina'] > 0 ? $hero['stamina'] / $hero['max_stamina'] : 0) * 100)));
         $worldTimeLabel = gameGetWorldTimeLabel($hero);
 
+        $sceneLabel = $this->viewModelBuilder->detectSceneLabel($hero['log']);
+        $isInTown = str_starts_with($sceneLabel, 'Town');
+
         $monsterHpMax = (int) ($battleView['max_hp'] ?? ($currentMonsterData['hp'] ?? 0));
         $monsterHpCurrent = (int) ($battleView['current_hp'] ?? $monsterHpMax);
         $monsterHpPercent = $monsterHpMax > 0
@@ -78,7 +81,8 @@ final class GameController
             'inventoryCount' => $inventoryCount,
             'bagCapacity' => $bagCapacity,
             'bagUpgradeCost' => $bagUpgradeCost,
-            'sceneLabel' => $this->viewModelBuilder->detectSceneLabel($hero['log']),
+            'sceneLabel' => $sceneLabel,
+            'isInTown' => $isInTown,
             'currentMonster' => $currentMonster,
             'currentMonsterData' => $currentMonsterData,
             'hpPercent' => $hpPercent,

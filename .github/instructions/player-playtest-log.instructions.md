@@ -260,3 +260,19 @@ This file stores historical user-flow tests for future agent runs.
   1. Verify multiple consecutive expansions (20 → 25 → 30 → 35) to confirm cost and capacity scaling remain consistent.
   2. Test bag limit behavior on other classes (Priest, Scholar, Bard) to ensure it is class-independent.
   3. Validate that bag state persists across page reloads and session transitions.
+
+### Date: 2026-07-16
+- Agent: Player Simulation Agent
+- Environment: Local Apache/PHP route on Windows, target URL `http://localhost/isekai-idle-life/`
+- Flow Name: Day-cycle theme transition and dark/light validation (automated smoke test)
+- Steps:
+  - [PASS] Started from active Fencer hero on `Day 3 - Morning` and verified light theme: `color-scheme: light`, `--bg-start: #f5f5f5`, `text color: rgb(0,0,0)` (dark text).
+  - [PASS] Executed 3 consecutive `Rest` actions to advance from `Morning` → `Day` → `Afternoon` → `Night`.
+  - [PASS] Confirmed theme transitioned to dark mode at `Day 3 - Night`: `color-scheme: dark`, `--bg-start: #202735`, light text colors.
+  - [PASS] Executed 1 `Rest` to advance from `Night` → `Day 4 - Morning`.
+  - [PASS] Confirmed theme transitioned back to light mode at `Day 4 - Morning`: `color-scheme: light`, `--bg-start: #f5f5f5`, `text color: rgb(0,0,0)`.
+- Outcome Summary: Day-cycle theme transitions are working correctly end-to-end. The system properly switches between light mode for daytime phases (Morning, Day, Afternoon) and dark mode for Night. CSS variables and color-scheme properties respond correctly to world-time phase changes with no lag or stale-cache issues in the current session.
+- Follow-up Actions:
+  1. Add automated CSS-variable assertions (--bg-start, --text-color) alongside time-phase checks to catch theme regressions early.
+  2. Test theme transitions on all classes to ensure theming is class-independent.
+  3. Validate theme consistency across viewport sizes (mobile, tablet, desktop) to ensure dark/light mode applies uniformly.

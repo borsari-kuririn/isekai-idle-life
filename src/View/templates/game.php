@@ -11,13 +11,40 @@ function renderItemStats(array $stats): string
 
     return implode(' | ', $parts);
 }
+
+$timePhaseByQuarter = [
+    0 => 'morning',
+    1 => 'day',
+    2 => 'afternoon',
+    3 => 'night',
+];
+
+$currentTimePhase = 'morning';
+if (!empty($hero['created'])) {
+    $currentQuarter = ((int) ($hero['day_quarter'] ?? 0)) % 4;
+    if ($currentQuarter < 0) {
+        $currentQuarter = 0;
+    }
+
+    $currentTimePhase = $timePhaseByQuarter[$currentQuarter] ?? 'morning';
+}
+
+$cssVersion = (string) @filemtime(__DIR__ . '/../../../Assets/css/app.css');
+if ($cssVersion === '' || $cssVersion === '0') {
+    $cssVersion = '1';
+}
+
+$jsVersion = (string) @filemtime(__DIR__ . '/../../../Assets/js/app.js');
+if ($jsVersion === '' || $jsVersion === '0') {
+    $jsVersion = '1';
+}
 ?><!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-current-time-phase="<?= htmlspecialchars($currentTimePhase) ?>" data-time-phase="<?= htmlspecialchars($currentTimePhase) ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Isekai Idle Life</title>
-    <link rel="stylesheet" href="Assets/css/app.css">
+    <link rel="stylesheet" href="Assets/css/app.css?v=<?= htmlspecialchars($cssVersion) ?>">
 </head>
 <body>
 <div class="wrap">
@@ -229,12 +256,16 @@ function renderItemStats(array $stats): string
 
             <aside class="card panel split-body">
                 <h2>Market and Bag</h2>
+                <?php $rightColumnDefaultTab = !empty($isInTown) ? 'market' : 'inventory'; ?>
                 <div class="tabs" role="tablist" aria-label="Right column views">
-                    <button type="button" class="tab-btn active" data-tab="market">Market</button>
-                    <button type="button" class="tab-btn" data-tab="inventory">Inventory</button>
+                    <?php if (!empty($isInTown)): ?>
+                        <button type="button" class="tab-btn <?= $rightColumnDefaultTab === 'market' ? 'active' : '' ?>" data-tab="market">Market</button>
+                    <?php endif; ?>
+                    <button type="button" class="tab-btn <?= $rightColumnDefaultTab === 'inventory' ? 'active' : '' ?>" data-tab="inventory">Inventory</button>
                 </div>
 
-                <div class="tab-panel active" data-panel="market">
+                <?php if (!empty($isInTown)): ?>
+                <div class="tab-panel <?= $rightColumnDefaultTab === 'market' ? 'active' : '' ?>" data-panel="market">
                     <div class="shop">
                         <h3>Utility</h3>
                         <div class="shop-grid">
@@ -283,8 +314,9 @@ function renderItemStats(array $stats): string
                         </div>
                     </div>
                 </div>
+                <?php endif; ?>
 
-                <div class="tab-panel" data-panel="inventory">
+                <div class="tab-panel <?= $rightColumnDefaultTab === 'inventory' ? 'active' : '' ?>" data-panel="inventory">
                     <div class="inventory">
                         <?php if ($inventoryCount === 0): ?>
                             <div class="item-card">No loot yet. Go hunt monsters outside town.</div>
@@ -316,6 +348,6 @@ function renderItemStats(array $stats): string
 
     <p class="footer-note">Prototype baseline: session-based PHP, no database, separated by domain files for classes, equipment, monsters, and the game engine.</p>
 </div>
-<script src="Assets/js/app.js"></script>
+<script src="Assets/js/app.js?v=<?= htmlspecialchars($jsVersion) ?>"></script>
 </body>
 </html>

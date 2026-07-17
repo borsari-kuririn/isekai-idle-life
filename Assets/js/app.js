@@ -1,4 +1,24 @@
 (function () {
+    const root = document.documentElement;
+    const storageKey = 'isekai-time-phase';
+    const currentPhase = root.getAttribute('data-current-time-phase') || 'morning';
+    const previousPhase = localStorage.getItem(storageKey);
+
+    if (previousPhase && previousPhase !== currentPhase) {
+        root.setAttribute('data-time-phase', previousPhase);
+        requestAnimationFrame(() => {
+            root.classList.add('time-shift');
+            root.setAttribute('data-time-phase', currentPhase);
+            setTimeout(() => {
+                root.classList.remove('time-shift');
+            }, 1000);
+        });
+    } else {
+        root.setAttribute('data-time-phase', currentPhase);
+    }
+
+    localStorage.setItem(storageKey, currentPhase);
+
     const tabs = document.querySelectorAll('[data-tab]');
     const panels = document.querySelectorAll('[data-panel]');
     const sceneTabs = document.querySelectorAll('[data-scene-tab]');

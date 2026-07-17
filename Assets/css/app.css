@@ -12,6 +12,77 @@
     --highlight: #e3e3e3;
     --border: #000000;
     --shadow: rgba(0, 0, 0, 0.22);
+    --ambient-overlay: rgba(7, 12, 26, 0.45);
+    --ambient-opacity: 0;
+}
+
+html[data-time-phase='morning'] {
+    color-scheme: light;
+    --bg-start: #f5f5f5;
+    --bg-end: #d8d8d8;
+    --panel: #ffffff;
+    --panel-alt: #ececec;
+    --panel-deep: #b9b9b9;
+    --text: #111111;
+    --muted: #4a4a4a;
+    --accent: #000000;
+    --accent-2: #222222;
+    --highlight: #e3e3e3;
+    --border: #000000;
+    --shadow: rgba(0, 0, 0, 0.22);
+    --ambient-opacity: 0;
+}
+
+html[data-time-phase='day'] {
+    color-scheme: light;
+    --bg-start: #f0f2f4;
+    --bg-end: #cfd6dc;
+    --panel: #fbfbfb;
+    --panel-alt: #e9edf0;
+    --panel-deep: #afb8c0;
+    --text: #111418;
+    --muted: #414950;
+    --accent: #0a1017;
+    --accent-2: #1c2732;
+    --highlight: #dde3e8;
+    --border: #0e1318;
+    --shadow: rgba(0, 0, 0, 0.25);
+    --ambient-opacity: 0.08;
+}
+
+html[data-time-phase='afternoon'] {
+    color-scheme: light;
+    --bg-start: #e8e4db;
+    --bg-end: #c6c0b3;
+    --panel: #f7f2e8;
+    --panel-alt: #e7dece;
+    --panel-deep: #b8ac95;
+    --text: #211b13;
+    --muted: #5a4e3d;
+    --accent: #2f2112;
+    --accent-2: #5a3d21;
+    --highlight: #e6dbca;
+    --border: #2f2418;
+    --shadow: rgba(32, 18, 7, 0.3);
+    --ambient-opacity: 0.16;
+}
+
+html[data-time-phase='night'] {
+    color-scheme: dark;
+    --bg-start: #202735;
+    --bg-end: #0f141d;
+    --panel: #273041;
+    --panel-alt: #1f2634;
+    --panel-deep: #111927;
+    --text: #e8eef8;
+    --muted: #a4b1c6;
+    --accent: #f2f7ff;
+    --accent-2: #c1cee4;
+    --highlight: #344157;
+    --border: #b8c5dc;
+    --shadow: rgba(0, 0, 0, 0.5);
+    --ambient-overlay: rgba(8, 12, 20, 0.64);
+    --ambient-opacity: 0.28;
 }
 
 * {
@@ -19,15 +90,28 @@
 }
 
 body {
+    position: relative;
     margin: 0;
     height: 100vh;
     font-family: 'Courier New', Courier, monospace;
     color: var(--text);
-    background: var(--bg-start);
+    background: linear-gradient(180deg, var(--bg-start) 0%, var(--bg-end) 100%);
     overflow: hidden;
 }
 
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(180deg, transparent 10%, var(--ambient-overlay) 100%);
+    opacity: var(--ambient-opacity);
+    z-index: 0;
+}
+
 .wrap {
+    position: relative;
+    z-index: 1;
     max-width: 1220px;
     margin: 0 auto;
     padding: 12px;
@@ -35,6 +119,22 @@ body {
     display: flex;
     flex-direction: column;
     gap: 10px;
+}
+
+html.time-shift body,
+html.time-shift body::before,
+html.time-shift .card,
+html.time-shift .hero-banner,
+html.time-shift .world-time-banner,
+html.time-shift .meta-chip,
+html.time-shift .stat,
+html.time-shift .class-selected-chip,
+html.time-shift .item-card,
+html.time-shift .tab-btn,
+html.time-shift .scene-tab,
+html.time-shift .hud-bar,
+html.time-shift .log-entry {
+    transition: background 0.9s ease, background-color 0.9s ease, color 0.9s ease, border-color 0.9s ease, box-shadow 0.9s ease, opacity 0.9s ease;
 }
 
 .hero-banner {
@@ -61,7 +161,7 @@ body {
 
 .world-time-banner {
     border: 1px solid var(--border);
-    background: #f1f1f1;
+    background: var(--panel-alt);
     padding: 4px 8px 2px;
     display: grid;
     justify-items: end;
@@ -97,7 +197,7 @@ body {
 .card {
     border: 2px solid var(--border);
     border-radius: 0;
-    background: rgba(255, 255, 255, 0.94);
+    background: color-mix(in srgb, var(--panel) 94%, transparent);
     padding: 10px;
     min-height: 0;
 }
@@ -143,7 +243,7 @@ body {
 .hero-title {
     display: block;
     font-size: 0.76rem;
-    color: #2f2f2f;
+    color: var(--muted);
     text-transform: uppercase;
     letter-spacing: 0.03em;
     line-height: 1;
@@ -169,7 +269,7 @@ body {
     width: 144px;
     height: 144px;
     border: 1px solid var(--border);
-    background: #d7d7d7;
+    background: var(--panel-deep);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -213,8 +313,8 @@ body {
 }
 
 .class-card:hover {
-    border-color: #2f2f2f;
-    background: #ededed;
+    border-color: var(--accent-2);
+    background: var(--panel-alt);
 }
 
 .class-card:focus-visible {
@@ -224,8 +324,8 @@ body {
 
 .class-card.selected,
 .class-card-select:has(.class-radio:checked) {
-    border-color: #000000;
-    background: #e7e7e7;
+    border-color: var(--accent);
+    background: var(--highlight);
 }
 
 .class-radio {
@@ -245,7 +345,7 @@ body {
     align-content: end;
     padding: 6px 8px;
     border: 1px solid var(--border);
-    background: #f1f1f1;
+    background: var(--panel-alt);
     font-size: 0.82rem;
 }
 
@@ -298,8 +398,8 @@ body {
 .stat {
     padding: 8px 8px 5px;
     border-radius: 0;
-    background: #efefef;
-    border: 1px solid #6a6a6a;
+    background: var(--panel-alt);
+    border: 1px solid var(--border);
 }
 
 .stat span {
@@ -334,7 +434,7 @@ body {
 
 .meta-chip {
     border: 1px solid var(--border);
-    background: #f1f1f1;
+    background: var(--panel-alt);
     padding: 4px 6px 2px;
     font-size: 0.72rem;
     display: flex;
@@ -465,6 +565,10 @@ button.ghost {
     min-height: 0;
     overflow: auto;
     padding-right: 2px;
+}
+
+.inventory {
+    display: block;
 }
 
 .shop {
@@ -702,6 +806,7 @@ button.ghost {
     background: #f5f5f5;
     border: 1px solid #6a6a6a;
     font-size: 0.78rem;
+    height: auto;
 }
 
 .inventory-table th,
@@ -710,6 +815,7 @@ button.ghost {
     padding: 6px;
     text-align: left;
     word-break: break-word;
+    vertical-align: top;
 }
 
 .inventory-table th {
