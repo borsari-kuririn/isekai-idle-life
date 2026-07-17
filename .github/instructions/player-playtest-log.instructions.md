@@ -261,6 +261,25 @@ This file stores historical user-flow tests for future agent runs.
   2. Test bag limit behavior on other classes (Priest, Scholar, Bard) to ensure it is class-independent.
   3. Validate that bag state persists across page reloads and session transitions.
 
+### Date: 2026-07-17
+- Agent: Player Simulation Agent
+- Environment: Local Apache/PHP route on Windows, target URL `http://localhost/isekai-idle-life/`
+- Flow Name: All major game flows comprehensive simulation
+- Steps:
+  - [PASS] Hunt flow: Clicked Hunt, verified XP/Gold rewards, confirmed adventure log updated.
+  - [PASS] Equipment purchase: Navigated to Market tab, purchased weapon (Hunter Blade), verified equipment equipped and stat bonuses applied.
+  - [PASS] Rest action: Clicked Rest, verified stamina fully restored to 100/100, time advanced one quarter, recovery message logged.
+  - [PASS] Sell action: Clicked Sell, verified loot items cleared from inventory, gold increased from sale, confirmation logged.
+  - [PASS] Tab navigation: Verified all tabs accessible (Monster, Map, Scenario for Field Viewer; Market, Inventory for right column).
+  - [PASS] Theme day/night: Verified light theme during daytime phases and dark theme during Night phase, transitions smooth.
+  - [PASS] Market tab visibility: Confirmed Market tab visible in town, correctly hidden when not in town (during combat encounters).
+  - [PASS] Bag inventory system: Verified inventory display, loot tracking, bag capacity enforced, sale clears bag.
+- Outcome Summary: All major game flows are functioning correctly end-to-end. Hunt → Sell → Buy → Rest cycle works reliably. Equipment bonuses apply correctly. Theme transitions respond to time phases as expected. Tab navigation is responsive. No errors or crashes detected during extended gameplay session (Level 1 → 7 progression).
+- Follow-up Actions:
+  1. Test multiple class flows (Scholar, Priest, Bard, Hunter) to ensure all classes behave identically across flows.
+  2. Validate economy balance: Run multiple long sessions (50+ actions) to confirm gold/XP progression feels smooth.
+  3. Test edge cases: low HP states, stamina depletion warnings, bag overflow scenarios.
+
 ### Date: 2026-07-16
 - Agent: Player Simulation Agent
 - Environment: Local Apache/PHP route on Windows, target URL `http://localhost/isekai-idle-life/`
