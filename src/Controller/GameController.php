@@ -16,7 +16,22 @@ final class GameController
         $monsterPool = $this->dataProvider->monsters();
 
         $action = $post['action'] ?? $get['action'] ?? null;
-        gameHandleAction($action, array_merge($get, $post), $classDefinitions, $equipmentCatalog, $monsterPool);
+        $isHtmxRequest = (!empty($_SERVER['HTTP_HX_REQUEST']) && $_SERVER['HTTP_HX_REQUEST'] === 'true')
+            || (!empty($post['_hx_request']) && $post['_hx_request'] === 'true')
+            || (!empty($get['_hx_request']) && $get['_hx_request'] === 'true');
+
+        if (in_array($action, ['set_scene_tab', 'set_right_tab'], true)) {
+            $uiState = $_SESSION['ui'] ?? [];
+            if ($action === 'set_scene_tab') {
+                $uiState['scene_tab'] = $post['scene_tab'] ?? $get['scene_tab'] ?? 'scene';
+            }
+            if ($action === 'set_right_tab') {
+                $uiState['right_tab'] = $post['right_tab'] ?? $get['right_tab'] ?? 'inventory';
+            }
+            $_SESSION['ui'] = $uiState;
+        } else {
+            gameHandleAction($action, array_merge($get, $post), $classDefinitions, $equipmentCatalog, $monsterPool);
+        }
 
         gameEnsureHero();
         $hero = $_SESSION['hero'];
@@ -61,6 +76,9 @@ final class GameController
 
         $sceneLabel = $this->viewModelBuilder->detectSceneLabel($hero['log']);
         $isInTown = str_starts_with($sceneLabel, 'Town');
+        $uiState = $_SESSION['ui'] ?? [];
+        $activeSceneTab = $uiState['scene_tab'] ?? ($action === 'hunt' ? 'monster' : 'scene');
+        $activeRightTab = $uiState['right_tab'] ?? ($isInTown ? 'market' : 'inventory');
 
         $monsterHpMax = (int) ($battleView['max_hp'] ?? ($currentMonsterData['hp'] ?? 0));
         $monsterHpCurrent = (int) ($battleView['current_hp'] ?? $monsterHpMax);
@@ -93,7 +111,9 @@ final class GameController
             'monsterHpMax' => $monsterHpMax,
             'monsterHpCurrent' => $monsterHpCurrent,
             'monsterHpPercent' => $monsterHpPercent,
-            'activeSceneTab' => $action === 'hunt' ? 'monster' : 'scene',
+            'activeSceneTab' => $activeSceneTab,
+            'activeRightTab' => $activeRightTab,
+            'isHtmxRequest' => $isHtmxRequest,
         ];
     }
 

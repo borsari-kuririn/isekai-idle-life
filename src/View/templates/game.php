@@ -38,7 +38,10 @@ $jsVersion = (string) @filemtime(__DIR__ . '/../../../Assets/js/app.js');
 if ($jsVersion === '' || $jsVersion === '0') {
     $jsVersion = '1';
 }
-?><!DOCTYPE html>
+$renderFullShell = empty($isHtmxRequest ?? false);
+?>
+<?php if ($renderFullShell): ?>
+<!DOCTYPE html>
 <html lang="en" data-current-time-phase="<?= htmlspecialchars($currentTimePhase) ?>" data-time-phase="<?= htmlspecialchars($currentTimePhase) ?>">
 <head>
     <meta charset="UTF-8">
@@ -47,7 +50,10 @@ if ($jsVersion === '' || $jsVersion === '0') {
     <link rel="stylesheet" href="Assets/css/app.css?v=<?= htmlspecialchars($cssVersion) ?>">
 </head>
 <body>
-<div class="wrap">
+<?php endif; ?>
+<?php if ($renderFullShell): ?>
+<div id="game-shell" class="wrap" data-current-time-phase="<?= htmlspecialchars($currentTimePhase) ?>" data-time-phase="<?= htmlspecialchars($currentTimePhase) ?>">
+<?php endif; ?>
     <section class="hero-banner">
         <div class="hero-banner-row">
             <h1>Isekai Idle Life</h1>
@@ -64,7 +70,7 @@ if ($jsVersion === '' || $jsVersion === '0') {
         <section class="card panel">
             <h2>Create Character</h2>
             <?php $defaultClassId = (string) (array_key_first($classDefinitions) ?? 'fencer'); ?>
-            <form method="post" class="panel">
+            <form method="post" class="panel" hx-post="<?= htmlspecialchars((string) ($_SERVER['SCRIPT_NAME'] ?? '/')) ?>" hx-target="#game-shell" hx-swap="innerHTML">
                 <input type="hidden" name="action" value="create">
                 <div class="form-row">
                     <label>
@@ -173,19 +179,19 @@ if ($jsVersion === '' || $jsVersion === '0') {
                 </div>
 
                 <div class="btn-row">
-                    <form method="post">
+                    <form method="post" hx-post="<?= htmlspecialchars((string) ($_SERVER['SCRIPT_NAME'] ?? '/')) ?>" hx-target="#game-shell" hx-swap="innerHTML">
                         <input type="hidden" name="action" value="hunt">
                         <button type="submit">Hunt</button>
                     </form>
-                    <form method="post">
+                    <form method="post" hx-post="<?= htmlspecialchars((string) ($_SERVER['SCRIPT_NAME'] ?? '/')) ?>" hx-target="#game-shell" hx-swap="innerHTML">
                         <input type="hidden" name="action" value="rest">
                         <button type="submit" class="secondary">Rest</button>
                     </form>
-                    <form method="post">
+                    <form method="post" hx-post="<?= htmlspecialchars((string) ($_SERVER['SCRIPT_NAME'] ?? '/')) ?>" hx-target="#game-shell" hx-swap="innerHTML">
                         <input type="hidden" name="action" value="sell">
                         <button type="submit" class="ghost">Sell</button>
                     </form>
-                    <form method="post">
+                    <form method="post" hx-post="<?= htmlspecialchars((string) ($_SERVER['SCRIPT_NAME'] ?? '/')) ?>" hx-target="#game-shell" hx-swap="innerHTML">
                         <input type="hidden" name="action" value="reset">
                         <button type="submit" class="ghost">Restart</button>
                     </form>
@@ -195,9 +201,9 @@ if ($jsVersion === '' || $jsVersion === '0') {
             <div class="card scene-card">
                 <h2>Field Viewer</h2>
                 <div class="scene-tabs" role="tablist" aria-label="Scene views">
-                    <button type="button" class="scene-tab <?= ($activeSceneTab ?? 'scene') === 'scene' ? 'active' : '' ?>" data-scene-tab="scene">Scenario</button>
-                    <button type="button" class="scene-tab <?= ($activeSceneTab ?? 'scene') === 'monster' ? 'active' : '' ?>" data-scene-tab="monster">Monster</button>
-                    <button type="button" class="scene-tab <?= ($activeSceneTab ?? 'scene') === 'map' ? 'active' : '' ?>" data-scene-tab="map">Map</button>
+                    <button type="button" class="scene-tab <?= ($activeSceneTab ?? 'scene') === 'scene' ? 'active' : '' ?>" data-scene-tab="scene" hx-post="<?= htmlspecialchars((string) ($_SERVER['SCRIPT_NAME'] ?? '/')) ?>" hx-target="#game-shell" hx-swap="innerHTML" hx-vals='{"action":"set_scene_tab","scene_tab":"scene"}'>Scenario</button>
+                    <button type="button" class="scene-tab <?= ($activeSceneTab ?? 'scene') === 'monster' ? 'active' : '' ?>" data-scene-tab="monster" hx-post="<?= htmlspecialchars((string) ($_SERVER['SCRIPT_NAME'] ?? '/')) ?>" hx-target="#game-shell" hx-swap="innerHTML" hx-vals='{"action":"set_scene_tab","scene_tab":"monster"}'>Monster</button>
+                    <button type="button" class="scene-tab <?= ($activeSceneTab ?? 'scene') === 'map' ? 'active' : '' ?>" data-scene-tab="map" hx-post="<?= htmlspecialchars((string) ($_SERVER['SCRIPT_NAME'] ?? '/')) ?>" hx-target="#game-shell" hx-swap="innerHTML" hx-vals='{"action":"set_scene_tab","scene_tab":"map"}'>Map</button>
                 </div>
                 <div class="scene-viewport">
                     <div class="scene-layer <?= ($activeSceneTab ?? 'scene') === 'scene' ? 'active' : '' ?>" data-scene-panel="scene">
@@ -256,12 +262,12 @@ if ($jsVersion === '' || $jsVersion === '0') {
 
             <aside class="card panel split-body">
                 <h2>Market and Bag</h2>
-                <?php $rightColumnDefaultTab = !empty($isInTown) ? 'market' : 'inventory'; ?>
+                <?php $rightColumnDefaultTab = $activeRightTab ?? (!empty($isInTown) ? 'market' : 'inventory'); ?>
                 <div class="tabs" role="tablist" aria-label="Right column views">
                     <?php if (!empty($isInTown)): ?>
-                        <button type="button" class="tab-btn <?= $rightColumnDefaultTab === 'market' ? 'active' : '' ?>" data-tab="market">Market</button>
+                        <button type="button" class="tab-btn <?= $rightColumnDefaultTab === 'market' ? 'active' : '' ?>" data-tab="market" hx-post="<?= htmlspecialchars((string) ($_SERVER['SCRIPT_NAME'] ?? '/')) ?>" hx-target="#game-shell" hx-swap="innerHTML" hx-vals='{"action":"set_right_tab","right_tab":"market"}'>Market</button>
                     <?php endif; ?>
-                    <button type="button" class="tab-btn <?= $rightColumnDefaultTab === 'inventory' ? 'active' : '' ?>" data-tab="inventory">Inventory</button>
+                    <button type="button" class="tab-btn <?= $rightColumnDefaultTab === 'inventory' ? 'active' : '' ?>" data-tab="inventory" hx-post="<?= htmlspecialchars((string) ($_SERVER['SCRIPT_NAME'] ?? '/')) ?>" hx-target="#game-shell" hx-swap="innerHTML" hx-vals='{"action":"set_right_tab","right_tab":"inventory"}'>Inventory</button>
                 </div>
 
                 <?php if (!empty($isInTown)): ?>
@@ -274,7 +280,7 @@ if ($jsVersion === '' || $jsVersion === '0') {
                                 <small>Current capacity: <?= (int) ($bagCapacity ?? gameBaseBagCapacity()) ?> slots</small>
                                 <small>Upgrade: +<?= gameBagUpgradeStep() ?> slots</small>
                                 <small>Price: <?= (int) ($bagUpgradeCost ?? gameGetBagUpgradeCost($hero)) ?> gold</small>
-                                <form method="post">
+                                <form method="post" hx-post="<?= htmlspecialchars((string) ($_SERVER['SCRIPT_NAME'] ?? '/')) ?>" hx-target="#game-shell" hx-swap="innerHTML">
                                     <input type="hidden" name="action" value="expand_bag">
                                     <button type="submit">Expand Bag</button>
                                 </form>
@@ -288,7 +294,7 @@ if ($jsVersion === '' || $jsVersion === '0') {
                                 <strong><?= htmlspecialchars($item['name']) ?></strong>
                                 <small>Price: <?= (int) $item['price'] ?> gold</small>
                                 <small>Bonus: <?= htmlspecialchars(renderItemStats($item['stats'])) ?></small>
-                                <form method="post">
+                                <form method="post" hx-post="<?= htmlspecialchars((string) ($_SERVER['SCRIPT_NAME'] ?? '/')) ?>" hx-target="#game-shell" hx-swap="innerHTML">
                                     <input type="hidden" name="action" value="buy">
                                     <input type="hidden" name="item_id" value="<?= htmlspecialchars($id) ?>">
                                     <button type="submit">Buy</button>
@@ -304,7 +310,7 @@ if ($jsVersion === '' || $jsVersion === '0') {
                                 <strong><?= htmlspecialchars($item['name']) ?></strong>
                                 <small>Price: <?= (int) $item['price'] ?> gold</small>
                                 <small>Bonus: <?= htmlspecialchars(renderItemStats($item['stats'])) ?></small>
-                                <form method="post">
+                                <form method="post" hx-post="<?= htmlspecialchars((string) ($_SERVER['SCRIPT_NAME'] ?? '/')) ?>" hx-target="#game-shell" hx-swap="innerHTML">
                                     <input type="hidden" name="action" value="buy">
                                     <input type="hidden" name="item_id" value="<?= htmlspecialchars($id) ?>">
                                     <button type="submit">Buy</button>
@@ -347,7 +353,10 @@ if ($jsVersion === '' || $jsVersion === '0') {
     <?php endif; ?>
 
     <p class="footer-note">Prototype baseline: session-based PHP, no database, separated by domain files for classes, equipment, monsters, and the game engine.</p>
+<?php if ($renderFullShell): ?>
 </div>
+<script src="https://unpkg.com/htmx.org@2.0.4"></script>
 <script src="Assets/js/app.js?v=<?= htmlspecialchars($jsVersion) ?>"></script>
 </body>
 </html>
+<?php endif; ?>

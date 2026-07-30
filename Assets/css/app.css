@@ -71,15 +71,15 @@ html[data-time-phase='night'] {
     color-scheme: dark;
     --bg-start: #202735;
     --bg-end: #0f141d;
-    --panel: #273041;
-    --panel-alt: #1f2634;
-    --panel-deep: #111927;
-    --text: #e8eef8;
-    --muted: #a4b1c6;
-    --accent: #f2f7ff;
-    --accent-2: #c1cee4;
-    --highlight: #344157;
-    --border: #b8c5dc;
+    --panel: #252c39;
+    --panel-alt: #1d2430;
+    --panel-deep: #111722;
+    --text: #f4f8ff;
+    --muted: #d0d8e6;
+    --accent: #0a0d12;
+    --accent-2: #1a2230;
+    --highlight: #364155;
+    --border: #c8d2e0;
     --shadow: rgba(0, 0, 0, 0.5);
     --ambient-overlay: rgba(8, 12, 20, 0.64);
     --ambient-opacity: 0.28;
@@ -148,7 +148,7 @@ html.time-shift .log-entry {
 .hero-banner h1 {
     margin: 0 0 4px;
     font-size: clamp(1.4rem, 3vw, 2rem);
-    color: var(--accent);
+    color: var(--text);
     letter-spacing: 0.02em;
 }
 
@@ -173,11 +173,13 @@ html.time-shift .log-entry {
     font-size: 0.66rem;
     font-weight: 700;
     letter-spacing: 0.04em;
+    color: var(--text);
 }
 
 .world-time-banner strong {
     font-size: 0.86rem;
     line-height: 1;
+    color: var(--text);
 }
 
 .grid {
@@ -205,7 +207,7 @@ html.time-shift .log-entry {
 .card h2,
 .card h3 {
     margin: 0;
-    color: var(--accent);
+    color: var(--text);
 }
 
 .card h2 {
@@ -229,12 +231,13 @@ html.time-shift .log-entry {
     font-size: 1.08rem;
     font-weight: 700;
     line-height: 1.1;
+    color: var(--text);
 }
 
 .hero-class {
     display: block;
     font-size: 0.8rem;
-    color: var(--muted);
+    color: var(--text);
     text-transform: uppercase;
     letter-spacing: 0.04em;
     line-height: 1;
@@ -243,7 +246,7 @@ html.time-shift .log-entry {
 .hero-title {
     display: block;
     font-size: 0.76rem;
-    color: var(--muted);
+    color: var(--text);
     text-transform: uppercase;
     letter-spacing: 0.03em;
     line-height: 1;
@@ -255,7 +258,7 @@ html.time-shift .log-entry {
     margin-top: 4px;
     font-size: 0.8rem;
     line-height: 1.2;
-    color: var(--muted);
+    color: var(--text);
     text-transform: none;
     letter-spacing: 0;
     font-weight: 600;
@@ -370,7 +373,7 @@ html.time-shift .log-entry {
 .class-copy .class-desc {
     font-size: 0.72rem;
     line-height: 1.15;
-    color: var(--muted);
+    color: var(--text);
     font-weight: 600;
 }
 
@@ -524,7 +527,7 @@ select {
     padding: 8px 10px;
     border: 1px solid var(--border);
     border-radius: 0;
-    background: #ffffff;
+    background: var(--panel-alt);
     color: var(--text);
 }
 
@@ -539,7 +542,7 @@ select {
 }
 
 button {
-    border: 1px solid #000000;
+    border: 1px solid var(--border);
     border-radius: 0;
     padding: 8px 10px;
     font-weight: 700;
@@ -554,7 +557,7 @@ button.secondary {
 }
 
 button.ghost {
-    background: #3a3a3a;
+    background: var(--panel-deep);
 }
 
 .shop,
@@ -586,8 +589,8 @@ button.ghost {
     gap: 3px;
     padding: 6px;
     border-radius: 0;
-    border: 1px solid #6a6a6a;
-    background: #f5f5f5;
+    border: 1px solid var(--border);
+    background: var(--panel-alt);
 }
 
 .shop .item-card strong {
@@ -606,7 +609,7 @@ button.ghost {
 
 .item-card small,
 .footer-note {
-    color: var(--muted);
+    color: var(--text);
     font-size: 0.78rem;
 }
 
@@ -614,8 +617,9 @@ button.ghost {
     padding: 7px 8px;
     border-left: 4px solid var(--accent);
     border-radius: 0;
-    background: #f3f3f3;
+    background: var(--panel-alt);
     font-size: 0.8rem;
+    color: var(--text);
 }
 
 .scene-card {
@@ -635,7 +639,7 @@ button.ghost {
 }
 
 .scene-tab {
-    background: #333333;
+    background: var(--panel-deep);
     color: #ffffff;
 }
 
@@ -644,11 +648,11 @@ button.ghost {
 }
 
 .scene-viewport {
-    border: 1px solid #5f5f5f;
+    border: 1px solid var(--border);
     border-radius: 0;
     min-height: 180px;
     padding: 12px;
-    background: #f2f2f2;
+    background: var(--panel-alt);
     position: relative;
     overflow: hidden;
 }
@@ -667,7 +671,7 @@ button.ghost {
 .scene-title {
     font-size: 1rem;
     margin-bottom: 6px;
-    color: var(--accent);
+    color: var(--text);
 }
 
 .monster-portrait {
@@ -675,8 +679,8 @@ button.ghost {
     max-width: 220px;
     margin: 10px auto 0;
     padding: 8px;
-    border: 1px solid #5f5f5f;
-    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid var(--border);
+    background: var(--panel);
 }
 
 .monster-portrait img {
@@ -692,7 +696,7 @@ button.ghost {
     place-items: center;
     min-height: 120px;
     font-size: 0.78rem;
-    color: var(--muted);
+    color: var(--text);
 }
 
 .monster-hud {
@@ -715,7 +719,7 @@ button.ghost {
     justify-content: center;
     gap: 8px;
     font-size: 0.76rem;
-    color: var(--muted);
+    color: var(--text);
 }
 
 .monster-stats strong {
@@ -725,7 +729,7 @@ button.ghost {
 .scene-subtitle {
     margin: 0;
     font-size: 0.85rem;
-    color: var(--muted);
+    color: var(--text);
 }
 
 .pixel-map {
@@ -739,16 +743,16 @@ button.ghost {
 .pixel-map span {
     aspect-ratio: 1 / 1;
     border-radius: 0;
-    background: #bdbdbd;
-    border: 1px solid #6a6a6a;
+    background: var(--panel-deep);
+    border: 1px solid var(--border);
 }
 
 .pixel-map span.path {
-    background: #e7e7e7;
+    background: var(--highlight);
 }
 
 .pixel-map span.player {
-    background: #121212;
+    background: var(--text);
 }
 
 .split-body {
@@ -772,7 +776,7 @@ button.ghost {
 }
 
 .tab-btn {
-    background: #333333;
+    background: var(--panel-deep);
     color: #ffffff;
 }
 
@@ -803,23 +807,25 @@ button.ghost {
     width: 100%;
     border-collapse: collapse;
     table-layout: fixed;
-    background: #f5f5f5;
-    border: 1px solid #6a6a6a;
+    background: var(--panel-alt);
+    border: 1px solid var(--border);
     font-size: 0.78rem;
     height: auto;
+    color: var(--text);
 }
 
 .inventory-table th,
 .inventory-table td {
-    border: 1px solid #6a6a6a;
+    border: 1px solid var(--border);
     padding: 6px;
     text-align: left;
     word-break: break-word;
     vertical-align: top;
+    color: var(--text);
 }
 
 .inventory-table th {
-    background: #ececec;
+    background: var(--panel-deep);
     font-weight: 700;
 }
 
