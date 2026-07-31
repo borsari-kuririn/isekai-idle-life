@@ -12,6 +12,21 @@ function renderItemStats(array $stats): string
     return implode(' | ', $parts);
 }
 
+function renderMaterialCost(array $cost, array $lootCatalog): string
+{
+    if (empty($cost)) {
+        return 'None';
+    }
+
+    $parts = [];
+    foreach ($cost as $itemId => $qty) {
+        $name = (string) ($lootCatalog[$itemId]['name'] ?? $itemId);
+        $parts[] = $name . ' x' . (int) $qty;
+    }
+
+    return implode(', ', $parts);
+}
+
 $timePhaseByQuarter = [
     0 => 'morning',
     1 => 'day',
@@ -324,15 +339,41 @@ $renderFullShell = empty($isHtmxRequest ?? false);
                         <h3>Weapons</h3>
                         <div class="shop-grid">
                         <?php foreach ($equipmentCatalog['weapon'] as $id => $item): ?>
+                            <?php
+                                $owned = in_array((string) $id, $ownedEquipment ?? [], true);
+                                $equipped = (($hero['equipped']['weapon'] ?? null) === $id);
+                                $upgradeLevel = (int) (($equipmentUpgrades[$id] ?? 0));
+                                $upgradeCost = gameGetEquipmentUpgradeCost($item, $upgradeLevel);
+                                $unlockLevel = (int) ($item['unlock_level'] ?? 1);
+                                $materialCost = (array) ($item['material_cost'] ?? []);
+                                $materialCostLabel = renderMaterialCost($materialCost, $lootCatalog ?? []);
+                                $effectiveStats = gameGetEquipmentTotalStats($item, $upgradeLevel);
+                            ?>
                             <article class="item-card">
-                                <strong><?= htmlspecialchars($item['name']) ?></strong>
+                                <strong><?= htmlspecialchars($item['name']) ?><?= $upgradeLevel > 0 ? ' +' . $upgradeLevel : '' ?></strong>
+                                <small>Tier: <?= htmlspecialchars((string) ($item['tier'] ?? 'starter')) ?> | Unlock: Lv <?= $unlockLevel ?></small>
                                 <small>Price: <?= (int) $item['price'] ?> gold</small>
-                                <small>Bonus: <?= htmlspecialchars(renderItemStats($item['stats'])) ?></small>
+                                <small>Materials: <?= htmlspecialchars($materialCostLabel) ?></small>
+                                <small>Bonus: <?= htmlspecialchars(renderItemStats($effectiveStats)) ?></small>
+                                <?php if (!$owned): ?>
                                 <form method="post" hx-post="<?= htmlspecialchars((string) ($_SERVER['SCRIPT_NAME'] ?? '/')) ?>" hx-target="#game-shell" hx-swap="outerHTML">
                                     <input type="hidden" name="action" value="buy">
                                     <input type="hidden" name="item_id" value="<?= htmlspecialchars($id) ?>">
                                     <button type="submit">Buy</button>
                                 </form>
+                                <?php else: ?>
+                                <small><?= $equipped ? 'Equipped' : 'Owned' ?></small>
+                                <form method="post" hx-post="<?= htmlspecialchars((string) ($_SERVER['SCRIPT_NAME'] ?? '/')) ?>" hx-target="#game-shell" hx-swap="outerHTML">
+                                    <input type="hidden" name="action" value="equip">
+                                    <input type="hidden" name="item_id" value="<?= htmlspecialchars($id) ?>">
+                                    <button type="submit" class="secondary" <?= $equipped ? 'disabled' : '' ?>><?= $equipped ? 'Equipped' : 'Equip' ?></button>
+                                </form>
+                                <form method="post" hx-post="<?= htmlspecialchars((string) ($_SERVER['SCRIPT_NAME'] ?? '/')) ?>" hx-target="#game-shell" hx-swap="outerHTML">
+                                    <input type="hidden" name="action" value="upgrade_equipment">
+                                    <input type="hidden" name="item_id" value="<?= htmlspecialchars($id) ?>">
+                                    <button type="submit" class="ghost" <?= $upgradeLevel >= 3 ? 'disabled' : '' ?>><?= $upgradeLevel >= 3 ? 'Max +3' : 'Upgrade (' . $upgradeCost . 'g)' ?></button>
+                                </form>
+                                <?php endif; ?>
                             </article>
                         <?php endforeach; ?>
                         </div>
@@ -340,14 +381,56 @@ $renderFullShell = empty($isHtmxRequest ?? false);
                         <h3>Armor</h3>
                         <div class="shop-grid">
                         <?php foreach ($equipmentCatalog['armor'] as $id => $item): ?>
+                            <?php
+                                $owned = in_array((string) $id, $ownedEquipment ?? [], true);
+                                $equipped = (($hero['equipped']['armor'] ?? null) === $id);
+                                $upgradeLevel = (int) (($equipmentUpgrades[$id] ?? 0));
+                                $upgradeCost = gameGetEquipmentUpgradeCost($item, $upgradeLevel);
+                                $unlockLevel = (int) ($item['unlock_level'] ?? 1);
+                                $materialCost = (array) ($item['material_cost'] ?? []);
+                                $materialCostLabel = renderMaterialCost($materialCost, $lootCatalog ?? []);
+                                $effectiveStats = gameGetEquipmentTotalStats($item, $upgradeLevel);
+                            ?>
                             <article class="item-card">
-                                <strong><?= htmlspecialchars($item['name']) ?></strong>
+                                <strong><?= htmlspecialchars($item['name']) ?><?= $upgradeLevel > 0 ? ' +' . $upgradeLevel : '' ?></strong>
+                                <small>Tier: <?= htmlspecialchars((string) ($item['tier'] ?? 'starter')) ?> | Unlock: Lv <?= $unlockLevel ?></small>
                                 <small>Price: <?= (int) $item['price'] ?> gold</small>
-                                <small>Bonus: <?= htmlspecialchars(renderItemStats($item['stats'])) ?></small>
+                                <small>Materials: <?= htmlspecialchars($materialCostLabel) ?></small>
+                                <small>Bonus: <?= htmlspecialchars(renderItemStats($effectiveStats)) ?></small>
+                                <?php if (!$owned): ?>
                                 <form method="post" hx-post="<?= htmlspecialchars((string) ($_SERVER['SCRIPT_NAME'] ?? '/')) ?>" hx-target="#game-shell" hx-swap="outerHTML">
                                     <input type="hidden" name="action" value="buy">
                                     <input type="hidden" name="item_id" value="<?= htmlspecialchars($id) ?>">
                                     <button type="submit">Buy</button>
+                                </form>
+                                <?php else: ?>
+                                <small><?= $equipped ? 'Equipped' : 'Owned' ?></small>
+                                <form method="post" hx-post="<?= htmlspecialchars((string) ($_SERVER['SCRIPT_NAME'] ?? '/')) ?>" hx-target="#game-shell" hx-swap="outerHTML">
+                                    <input type="hidden" name="action" value="equip">
+                                    <input type="hidden" name="item_id" value="<?= htmlspecialchars($id) ?>">
+                                    <button type="submit" class="secondary" <?= $equipped ? 'disabled' : '' ?>><?= $equipped ? 'Equipped' : 'Equip' ?></button>
+                                </form>
+                                <form method="post" hx-post="<?= htmlspecialchars((string) ($_SERVER['SCRIPT_NAME'] ?? '/')) ?>" hx-target="#game-shell" hx-swap="outerHTML">
+                                    <input type="hidden" name="action" value="upgrade_equipment">
+                                    <input type="hidden" name="item_id" value="<?= htmlspecialchars($id) ?>">
+                                    <button type="submit" class="ghost" <?= $upgradeLevel >= 3 ? 'disabled' : '' ?>><?= $upgradeLevel >= 3 ? 'Max +3' : 'Upgrade (' . $upgradeCost . 'g)' ?></button>
+                                </form>
+                                <?php endif; ?>
+                            </article>
+                        <?php endforeach; ?>
+                        </div>
+
+                        <h3>Crafting</h3>
+                        <div class="shop-grid">
+                        <?php foreach (($craftRecipes ?? []) as $recipeId => $recipe): ?>
+                            <article class="item-card">
+                                <strong><?= htmlspecialchars((string) ($recipe['name'] ?? $recipeId)) ?></strong>
+                                <small>Gold cost: <?= (int) ($recipe['gold_cost'] ?? 0) ?></small>
+                                <small>Ingredients: <?= htmlspecialchars(renderMaterialCost((array) ($recipe['ingredients'] ?? []), $lootCatalog ?? [])) ?></small>
+                                <form method="post" hx-post="<?= htmlspecialchars((string) ($_SERVER['SCRIPT_NAME'] ?? '/')) ?>" hx-target="#game-shell" hx-swap="outerHTML">
+                                    <input type="hidden" name="action" value="craft_item">
+                                    <input type="hidden" name="recipe_id" value="<?= htmlspecialchars((string) $recipeId) ?>">
+                                    <button type="submit">Craft</button>
                                 </form>
                             </article>
                         <?php endforeach; ?>
@@ -365,16 +448,28 @@ $renderFullShell = empty($isHtmxRequest ?? false);
                                 <thead>
                                 <tr>
                                     <th>Item</th>
+                                    <th>Qty</th>
                                     <th>Type</th>
                                     <th>Sell value</th>
+                                    <th>Action</th>
                                 </tr>
                                 </thead>
                                 <tbody>
-                                <?php foreach ($hero['inventory'] as $item): ?>
+                                <?php foreach (($inventoryByItem ?? []) as $itemId => $qty): ?>
+                                    <?php $lootInfo = ($lootCatalog[$itemId] ?? null); ?>
                                     <tr>
-                                        <td><?= htmlspecialchars((string) ($item['name'] ?? 'Item')) ?></td>
-                                        <td><?= htmlspecialchars((string) ($item['type'] ?? 'unknown')) ?></td>
-                                        <td><?= (int) ($item['value'] ?? 0) ?> gold</td>
+                                        <td><?= htmlspecialchars((string) ($lootInfo['name'] ?? $itemId)) ?></td>
+                                        <td><?= (int) $qty ?></td>
+                                        <td><?= htmlspecialchars((string) ($lootInfo['type'] ?? 'unknown')) ?></td>
+                                        <td><?= (int) ($lootInfo['sell_value'] ?? 0) ?> gold</td>
+                                        <td>
+                                            <form method="post" hx-post="<?= htmlspecialchars((string) ($_SERVER['SCRIPT_NAME'] ?? '/')) ?>" hx-target="#game-shell" hx-swap="outerHTML">
+                                                <input type="hidden" name="action" value="sell_item">
+                                                <input type="hidden" name="item_id" value="<?= htmlspecialchars((string) $itemId) ?>">
+                                                <input type="hidden" name="quantity" value="1">
+                                                <button type="submit" class="ghost">Sell 1</button>
+                                            </form>
+                                        </td>
                                     </tr>
                                 <?php endforeach; ?>
                                 </tbody>

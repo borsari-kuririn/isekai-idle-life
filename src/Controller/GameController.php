@@ -14,6 +14,8 @@ final class GameController
         $classDefinitions = $this->dataProvider->classes();
         $equipmentCatalog = $this->dataProvider->equipment();
         $monsterPool = $this->dataProvider->monsters();
+        $lootCatalog = $this->dataProvider->lootCatalog();
+        $craftRecipes = $this->dataProvider->craftRecipes();
 
         $action = $post['action'] ?? $get['action'] ?? null;
         $isHtmxRequest = (!empty($_SERVER['HTTP_HX_REQUEST']) && $_SERVER['HTTP_HX_REQUEST'] === 'true')
@@ -44,7 +46,9 @@ final class GameController
         gameEnsureStaminaState($hero);
         gameEnsureTimeState($hero);
         gameEnsureBagState($hero);
+        gameEnsureInventoryState($hero);
         gameEnsureExpeditionState($hero);
+        gameEnsureEquipmentProgressionState($hero);
         $_SESSION['hero'] = $hero;
 
         // Session is the primary state storage; cookie keeps a fallback copy
@@ -57,8 +61,11 @@ final class GameController
         $weaponInfo = $hero['equipped']['weapon'] ? gameFindEquipment($hero['equipped']['weapon'], $equipmentCatalog) : null;
         $armorInfo = $hero['equipped']['armor'] ? gameFindEquipment($hero['equipped']['armor'], $equipmentCatalog) : null;
         $inventoryCount = count($hero['inventory']);
+        $inventoryByItem = gameGetInventoryCounts($hero);
         $bagCapacity = (int) ($hero['bag_capacity'] ?? gameBaseBagCapacity());
         $bagUpgradeCost = gameGetBagUpgradeCost($hero);
+        $ownedEquipment = array_values(array_unique(array_map('strval', (array) ($hero['owned_equipment'] ?? []))));
+        $equipmentUpgrades = (array) ($hero['equipment_upgrades'] ?? []);
         $expedition = $hero['expedition'] ?? [];
         $routeDefinitions = gameRouteDefinitions();
         $selectedRouteId = (string) ($expedition['route_id'] ?? 'meadow');
@@ -98,6 +105,8 @@ final class GameController
             'classDefinitions' => $classDefinitions,
             'equipmentCatalog' => $equipmentCatalog,
             'monsterPool' => $monsterPool,
+            'lootCatalog' => $lootCatalog,
+            'craftRecipes' => $craftRecipes,
             'hero' => $hero,
             'heroStats' => $heroStats,
             'classInfo' => $classInfo,
@@ -105,8 +114,11 @@ final class GameController
             'weaponInfo' => $weaponInfo,
             'armorInfo' => $armorInfo,
             'inventoryCount' => $inventoryCount,
+            'inventoryByItem' => $inventoryByItem,
             'bagCapacity' => $bagCapacity,
             'bagUpgradeCost' => $bagUpgradeCost,
+            'ownedEquipment' => $ownedEquipment,
+            'equipmentUpgrades' => $equipmentUpgrades,
             'expedition' => $expedition,
             'routeDefinitions' => $routeDefinitions,
             'selectedRoute' => $selectedRoute,
