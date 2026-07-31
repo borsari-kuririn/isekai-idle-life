@@ -74,8 +74,14 @@ final class GameController
         $staminaPercent = (int) max(0, min(100, (($hero['max_stamina'] > 0 ? $hero['stamina'] / $hero['max_stamina'] : 0) * 100)));
         $worldTimeLabel = gameGetWorldTimeLabel($hero);
 
-        $sceneLabel = $this->viewModelBuilder->detectSceneLabel($hero['log']);
-        $isInTown = str_starts_with($sceneLabel, 'Town');
+        $sceneLabels = [
+            'crossroad' => 'Crossroad Fields',
+            'hunting' => 'Hunting Grounds',
+            'town' => 'Town District',
+        ];
+        $location = (string) ($hero['location'] ?? '');
+        $sceneLabel = $sceneLabels[$location] ?? $this->viewModelBuilder->detectSceneLabel($hero['log']);
+        $isInTown = $location === 'town' || str_starts_with($sceneLabel, 'Town');
         $uiState = $_SESSION['ui'] ?? [];
         $activeSceneTab = $uiState['scene_tab'] ?? ($action === 'hunt' ? 'monster' : 'scene');
         $activeRightTab = $uiState['right_tab'] ?? ($isInTown ? 'market' : 'inventory');

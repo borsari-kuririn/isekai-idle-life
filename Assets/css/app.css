@@ -456,7 +456,7 @@ html.time-shift .log-entry {
     height: 20px;
     border-radius: 0;
     border: 1px solid var(--border);
-    background: #eeeeee;
+    background: #111111;
     overflow: hidden;
 }
 
@@ -464,7 +464,7 @@ html.time-shift .log-entry {
     position: absolute;
     inset: 0 auto 0 0;
     width: var(--fill, 100%);
-    background: #5a5a5a;
+    background: #666666;
 }
 
 .hud-meta {
@@ -558,6 +558,7 @@ button.secondary {
 
 button.ghost {
     background: var(--panel-deep);
+    color: var(--text);
 }
 
 .shop,
@@ -631,6 +632,10 @@ button.ghost {
     min-height: 0;
 }
 
+.scene-actions {
+    margin-bottom: 2px;
+}
+
 .scene-tabs {
     display: flex;
     gap: 6px;
@@ -638,13 +643,21 @@ button.ghost {
     align-items: flex-start;
 }
 
+.scene-tabs .scene-tab,
+.tabs .tab-btn,
+.scene-actions button {
+    flex: 0 0 auto;
+    align-self: flex-start;
+}
+
 .scene-tab {
     background: var(--panel-deep);
-    color: #ffffff;
+    color: var(--text);
 }
 
 .scene-tab.active {
     background: var(--accent);
+    color: #ffffff;
 }
 
 .scene-viewport {
@@ -710,7 +723,7 @@ button.ghost {
 }
 
 .monster-fill {
-    background: #5a5a5a;
+    background: #666666;
 }
 
 .monster-stats {
@@ -769,19 +782,14 @@ button.ghost {
     align-items: flex-start;
 }
 
-.scene-tabs .scene-tab,
-.tabs .tab-btn {
-    flex: 0 0 auto;
-    align-self: flex-start;
-}
-
 .tab-btn {
     background: var(--panel-deep);
-    color: #ffffff;
+    color: var(--text);
 }
 
 .tab-btn.active {
     background: var(--accent);
+    color: #ffffff;
 }
 
 .tab-panel {

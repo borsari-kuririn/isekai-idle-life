@@ -35,7 +35,7 @@ final class HeroViewModelBuilder
             return 'Town Gate';
         }
 
-        if (str_contains($latest, 'rested') || str_contains($latest, 'sold') || str_contains($latest, 'buy') || str_contains($latest, 'equipped')) {
+        if (str_contains($latest, 'rested') || str_contains($latest, 'sold') || str_contains($latest, 'buy') || str_contains($latest, 'equipped') || str_contains($latest, 'expand')) {
             return 'Town District';
         }
 

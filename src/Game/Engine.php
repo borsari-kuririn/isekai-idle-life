@@ -100,6 +100,7 @@ function gameNewHeroState(): array
         'day_quarter' => 0,
         'quarter_stamina_spent' => 0,
         'bag_capacity' => $baseBagCapacity,
+        'location' => 'crossroad',
         'inventory' => [],
         'equipped' => [
             'weapon' => null,
@@ -337,6 +338,7 @@ function gameHandleAction(?string $action, array $request, array $classDefinitio
         $hero['day_quarter'] = 0;
         $hero['quarter_stamina_spent'] = 0;
         $hero['bag_capacity'] = gameBaseBagCapacity();
+        $hero['location'] = 'crossroad';
         $hero['inventory'] = [];
         $hero['equipped'] = ['weapon' => null, 'armor' => null];
         $hero['battle'] = null;
@@ -357,6 +359,10 @@ function gameHandleAction(?string $action, array $request, array $classDefinitio
     gameEnsureTimeState($hero);
     gameEnsureBagState($hero);
 
+    if (in_array($action, ['rest', 'sell', 'buy', 'expand_bag'], true)) {
+        $hero['location'] = 'town';
+    }
+
     $actionStaminaCost = [
         'hunt' => 3,
         'sell' => 2,
@@ -376,6 +382,7 @@ function gameHandleAction(?string $action, array $request, array $classDefinitio
     }
 
     if ($action === 'hunt') {
+        $hero['location'] = 'hunting';
         $monster = $monsterPool[array_rand($monsterPool)];
         $hero['battle'] = [
             'monster' => $monster,

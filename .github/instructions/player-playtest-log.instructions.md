@@ -295,3 +295,26 @@ This file stores historical user-flow tests for future agent runs.
   1. Add automated CSS-variable assertions (--bg-start, --text-color) alongside time-phase checks to catch theme regressions early.
   2. Test theme transitions on all classes to ensure theming is class-independent.
   3. Validate theme consistency across viewport sizes (mobile, tablet, desktop) to ensure dark/light mode applies uniformly.
+
+### Date: 2026-07-30
+- Agent: Player Simulation Agent
+- Environment: Windows, PHP 8.3.32 built-in server at `http://localhost:8000`, Playwright integrated browser, HTMX 2.0.4
+- Flow Name: Complete HTMX interaction regression and four-phase WCAG contrast audit
+- Steps:
+  - [PASS] Ran `php -l` against all 10 PHP files; every file reported no syntax errors before and after the fixes.
+  - [BLOCKED] The first automated hidden-radio `.check()` for Hunter was intercepted by the visible class portrait, matching the known Playwright class-card interaction flake.
+  - [PASS] Repeated class selection through the visible Bard portrait, created `Lyra HTMX`, and confirmed character creation completed through an HTMX POST without a document navigation.
+  - [PASS] Verified Hunt, Rest, Sell, Restart, Buy, Expand Bag, Scenario, Monster, Map, Market, and Inventory requests sent `HX-Request: true`, returned HTTP 200, preserved the URL, and left exactly one `#game-shell` element.
+  - [PASS] Verified a fresh Bard loop: Hunt consumed 3 stamina and produced one item, Rest restored stamina and granted the +2 Bard bonus, and Sell removed the item for 6 gold.
+  - [PASS] Verified equipment purchase and bag upgrades, including Rusty Sword/Leather Coat equipment updates and capacity growth from 20 to 25 to 30 slots.
+  - [FAIL] Initial HTMX Rest advanced visible world time from Morning to Day while the shell and document theme remained Morning because `innerHTML` swaps did not replace phase metadata.
+  - [FAIL] Initial bag expansion caused Market to disappear because location was inferred from log wording and the expansion message was not recognized as a town action.
+  - [PASS] After changing the game-shell swap to `outerHTML` and persisting hero location, each Rest kept shell/document phase synchronized and Market remained visible after Buy, Expand Bag, Rest, and Sell.
+  - [FAIL] Initial WCAG audit found white text on light `panel-deep` controls at 1.96-2.24:1 and white HUD text on the unfilled track at 1.16:1.
+  - [PASS] After the contrast correction, stable-state audits passed Morning, Day, Afternoon, and Night with minimum text contrast 5.74:1 (required 4.5:1) and minimum HUD non-text contrast 3.29:1 (required 3:1).
+  - [PASS] Final reload confirmed HTMX 2.0.4 loaded with no console errors, page errors, failed resources, duplicate shell, or phase/time mismatch.
+- Outcome Summary: The full HTMX player flow and day-cycle contrast matrix pass after correcting two functional regressions and two contrast defects discovered during the run. All gameplay interactions tested now update through HTMX without navigation, town state remains stable across market actions, and every settled day phase meets the audited WCAG AA text and non-text thresholds.
+- Follow-up Actions:
+  1. Add the four-phase contrast matrix as a committed automated browser test so transition and palette regressions fail CI.
+  2. Add deterministic test selectors to class cards and action controls to avoid hidden-radio pointer interception in Playwright.
+  3. Repeat the contrast audit at mobile and tablet breakpoints and include keyboard-only class selection.
