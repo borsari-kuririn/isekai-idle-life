@@ -318,3 +318,25 @@ This file stores historical user-flow tests for future agent runs.
   1. Add the four-phase contrast matrix as a committed automated browser test so transition and palette regressions fail CI.
   2. Add deterministic test selectors to class cards and action controls to avoid hidden-radio pointer interception in Playwright.
   3. Repeat the contrast audit at mobile and tablet breakpoints and include keyboard-only class selection.
+
+### Date: 2026-07-30
+- Agent: Player Simulation Agent
+- Environment: Windows, PHP 8.3.32 built-in server at `http://localhost:8000`, Playwright integrated browser, HTMX 2.0.4
+- Flow Name: Four-cycle Hunter progression and economy loop
+- Steps:
+  - [BLOCKED] The first loop runner stopped after one real Hunt because `URLSearchParams` was unavailable in the Playwright tool sandbox; the game request itself completed correctly and produced a Skeleton partial defeat.
+  - [PASS] Reset through HTMX, selected Hunter through the visible portrait, and created a fresh level-1 hero named `Loop Hunter` with 20 gold, 100 stamina, an empty 20-slot bag, and no equipment.
+  - [PASS] Completed four cycles of 10 Hunts, Sell, market investment when planned, and Rest: 40 Hunts and 54 total HTMX requests.
+  - [PASS] All 54 requests returned HTTP 200 with `HX-Request: true`; no interaction left the gameplay URL or duplicated the game shell.
+  - [PASS] Recorded 40 victories and 0 defeats across Goblin (12), Giant Rat (11), Skeleton (9), and Slime (8).
+  - [PASS] Progressed from level 1 to level 7 and from Day 1 - Morning to Day 3 - Morning while ending at full HP and stamina.
+  - [PASS] Purchased and equipped Hunter Blade during cycle 1, purchased and equipped Leather Coat during cycle 2, and expanded the bag from 20 to 25 slots during cycle 3.
+  - [PASS] Verified each ten-Hunt sell/rest boundary: cycle-end gold was 104, 198, 291, and 390 respectively despite all planned spending.
+  - [FAIL] Balance target was not sustained: the first ten Hunts advanced the hero from level 1 to 4 and generated 130 gold before purchasing the strongest current Hunter weapon.
+  - [FAIL] Encounter pressure disappeared in the tested policy: all 40 encounters were victories, rewards grew faster than available sinks, and the optimal repeated action pattern remained Hunt ten times, Sell all, Rest.
+  - [PASS] Authored `docs/gameplay-feature-domain-brief.md` with evidence-based feature options, selected expedition risk/return as the recommended first mechanic, and specified state, actions, tuning knobs, acceptance criteria, delivery order, and agent ownership.
+- Outcome Summary: The long loop is technically stable but reaches economic and combat saturation too quickly. A fresh Hunter gained six levels, fully equipped both slots, expanded the bag, and accumulated 390 gold in four short cycles without a defeat. The resulting domain brief recommends adding expedition commitment and risk before expanding content volume, then layering routes, phase modifiers, class passives, equipment progression, contracts, and material crafting.
+- Follow-up Actions:
+  1. Ask the Game Design Agent to resolve the open F1 balance questions and simulate Threat/reward/loss values before implementation.
+  2. Implement expedition state and explicit Return to Town as the first small feature slice.
+  3. Repeat this exact four-cycle policy after F1 and compare win rate, level, gold, return decisions, and loss events against this baseline.

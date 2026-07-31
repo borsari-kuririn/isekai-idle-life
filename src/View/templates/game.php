@@ -181,21 +181,46 @@ $renderFullShell = empty($isHtmxRequest ?? false);
                 <div class="btn-row scene-actions">
                     <form method="post" hx-post="<?= htmlspecialchars((string) ($_SERVER['SCRIPT_NAME'] ?? '/')) ?>" hx-target="#game-shell" hx-swap="outerHTML">
                         <input type="hidden" name="action" value="hunt">
-                        <button type="submit">Hunt</button>
+                        <button type="submit"><?= !empty($isExpeditionActive) ? 'Continue Hunt' : 'Start Expedition' ?></button>
                     </form>
+                    <?php if (!empty($isExpeditionActive)): ?>
+                    <form method="post" hx-post="<?= htmlspecialchars((string) ($_SERVER['SCRIPT_NAME'] ?? '/')) ?>" hx-target="#game-shell" hx-swap="outerHTML">
+                        <input type="hidden" name="action" value="return_town">
+                        <button type="submit" class="secondary">Return to Town</button>
+                    </form>
+                    <?php endif; ?>
                     <form method="post" hx-post="<?= htmlspecialchars((string) ($_SERVER['SCRIPT_NAME'] ?? '/')) ?>" hx-target="#game-shell" hx-swap="outerHTML">
                         <input type="hidden" name="action" value="rest">
-                        <button type="submit" class="secondary">Rest</button>
+                        <button type="submit" class="secondary" <?= empty($isInTown) ? 'disabled title="Rest is only available in town."' : '' ?>>Rest</button>
                     </form>
                     <form method="post" hx-post="<?= htmlspecialchars((string) ($_SERVER['SCRIPT_NAME'] ?? '/')) ?>" hx-target="#game-shell" hx-swap="outerHTML">
                         <input type="hidden" name="action" value="sell">
-                        <button type="submit" class="ghost">Sell</button>
+                        <button type="submit" class="ghost" <?= empty($isInTown) ? 'disabled title="Sell is only available in town."' : '' ?>>Sell</button>
                     </form>
                     <form method="post" hx-post="<?= htmlspecialchars((string) ($_SERVER['SCRIPT_NAME'] ?? '/')) ?>" hx-target="#game-shell" hx-swap="outerHTML">
                         <input type="hidden" name="action" value="reset">
                         <button type="submit" class="ghost">Restart</button>
                     </form>
                 </div>
+
+                <div class="panel expedition-status">
+                    <?php $pendingLootCount = count($expedition['pending_loot'] ?? []); ?>
+                    <h3>Expedition Status</h3>
+                    <div class="status-meta">
+                        <div class="meta-chip"><span>ROUTE</span><strong><?= htmlspecialchars((string) ($selectedRoute['name'] ?? 'Crossroad Meadow')) ?></strong></div>
+                        <div class="meta-chip"><span>THREAT</span><strong><?= (int) ($expedition['threat'] ?? 0) ?>/<?= gameExpeditionThreatCap() ?></strong></div>
+                        <div class="meta-chip"><span>WINS</span><strong><?= (int) ($expedition['wins'] ?? 0) ?></strong></div>
+                    </div>
+                    <div class="status-meta">
+                        <div class="meta-chip"><span>PENDING GOLD</span><strong><?= (int) ($expedition['pending_gold'] ?? 0) ?></strong></div>
+                        <div class="meta-chip"><span>PENDING XP</span><strong><?= (int) ($expedition['pending_xp'] ?? 0) ?></strong></div>
+                        <div class="meta-chip"><span>PENDING LOOT</span><strong><?= $pendingLootCount ?></strong></div>
+                    </div>
+                    <?php if ((int) ($expedition['threat'] ?? 0) >= (gameExpeditionEliteInterval() - 1)): ?>
+                        <p class="scene-subtitle">Elite warning: next victory encounter is elite level.</p>
+                    <?php endif; ?>
+                </div>
+
                 <div class="scene-tabs" role="tablist" aria-label="Scene views">
                     <button type="button" class="scene-tab <?= ($activeSceneTab ?? 'scene') === 'scene' ? 'active' : '' ?>" data-scene-tab="scene" hx-post="<?= htmlspecialchars((string) ($_SERVER['SCRIPT_NAME'] ?? '/')) ?>" hx-target="#game-shell" hx-swap="outerHTML" hx-vals='{"action":"set_scene_tab","scene_tab":"scene"}'>Scenario</button>
                     <button type="button" class="scene-tab <?= ($activeSceneTab ?? 'scene') === 'monster' ? 'active' : '' ?>" data-scene-tab="monster" hx-post="<?= htmlspecialchars((string) ($_SERVER['SCRIPT_NAME'] ?? '/')) ?>" hx-target="#game-shell" hx-swap="outerHTML" hx-vals='{"action":"set_scene_tab","scene_tab":"monster"}'>Monster</button>
@@ -237,6 +262,19 @@ $renderFullShell = empty($isHtmxRequest ?? false);
                     <div class="scene-layer <?= ($activeSceneTab ?? 'scene') === 'map' ? 'active' : '' ?>" data-scene-panel="map">
                         <div>
                             <h3 class="scene-title">Route Grid</h3>
+                            <?php if (!empty($isInTown)): ?>
+                            <div class="btn-row">
+                                <?php foreach (($routeDefinitions ?? []) as $routeId => $route): ?>
+                                <form method="post" hx-post="<?= htmlspecialchars((string) ($_SERVER['SCRIPT_NAME'] ?? '/')) ?>" hx-target="#game-shell" hx-swap="outerHTML">
+                                    <input type="hidden" name="action" value="select_route">
+                                    <input type="hidden" name="route_id" value="<?= htmlspecialchars((string) $routeId) ?>">
+                                    <button type="submit" class="<?= ($selectedRouteId ?? 'meadow') === $routeId ? 'secondary' : 'ghost' ?>"><?= htmlspecialchars((string) ($route['name'] ?? $routeId)) ?></button>
+                                </form>
+                                <?php endforeach; ?>
+                            </div>
+                            <?php else: ?>
+                            <p class="scene-subtitle">Route selection is available in town before starting an expedition.</p>
+                            <?php endif; ?>
                             <div class="pixel-map" aria-hidden="true">
                                 <span></span><span></span><span class="path"></span><span class="path"></span><span class="path"></span><span></span><span></span><span></span>
                                 <span></span><span></span><span class="path"></span><span></span><span class="path"></span><span></span><span></span><span></span>

@@ -44,12 +44,8 @@ final class GameController
         gameEnsureStaminaState($hero);
         gameEnsureTimeState($hero);
         gameEnsureBagState($hero);
-        $_SESSION['hero']['stamina'] = $hero['stamina'];
-        $_SESSION['hero']['max_stamina'] = $hero['max_stamina'];
-        $_SESSION['hero']['day'] = $hero['day'];
-        $_SESSION['hero']['day_quarter'] = $hero['day_quarter'];
-        $_SESSION['hero']['quarter_stamina_spent'] = $hero['quarter_stamina_spent'];
-        $_SESSION['hero']['bag_capacity'] = $hero['bag_capacity'];
+        gameEnsureExpeditionState($hero);
+        $_SESSION['hero'] = $hero;
 
         // Session is the primary state storage; cookie keeps a fallback copy
         // for hosts where PHP session storage is unstable between requests.
@@ -63,6 +59,11 @@ final class GameController
         $inventoryCount = count($hero['inventory']);
         $bagCapacity = (int) ($hero['bag_capacity'] ?? gameBaseBagCapacity());
         $bagUpgradeCost = gameGetBagUpgradeCost($hero);
+        $expedition = $hero['expedition'] ?? [];
+        $routeDefinitions = gameRouteDefinitions();
+        $selectedRouteId = (string) ($expedition['route_id'] ?? 'meadow');
+        $selectedRoute = $routeDefinitions[$selectedRouteId] ?? ($routeDefinitions['meadow'] ?? ['name' => 'Unknown Route']);
+        $isExpeditionActive = !empty($expedition['active']);
 
         $battleView = $this->viewModelBuilder->getCurrentBattleMonster($hero, $monsterPool);
         $currentMonster = $battleView['monster']['name'] ?? null;
@@ -77,6 +78,7 @@ final class GameController
         $sceneLabels = [
             'crossroad' => 'Crossroad Fields',
             'hunting' => 'Hunting Grounds',
+            'expedition' => 'Expedition Route',
             'town' => 'Town District',
         ];
         $location = (string) ($hero['location'] ?? '');
@@ -105,6 +107,11 @@ final class GameController
             'inventoryCount' => $inventoryCount,
             'bagCapacity' => $bagCapacity,
             'bagUpgradeCost' => $bagUpgradeCost,
+            'expedition' => $expedition,
+            'routeDefinitions' => $routeDefinitions,
+            'selectedRoute' => $selectedRoute,
+            'selectedRouteId' => $selectedRouteId,
+            'isExpeditionActive' => $isExpeditionActive,
             'sceneLabel' => $sceneLabel,
             'isInTown' => $isInTown,
             'currentMonster' => $currentMonster,

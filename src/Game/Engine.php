@@ -21,6 +21,30 @@ function gameBagUpgradeStep(): int
     return 5;
 }
 
+function gameExpeditionThreatCap(): int
+{
+    return 5;
+}
+
+function gameExpeditionEliteInterval(): int
+{
+    return 5;
+}
+
+function gameRouteDefinitions(): array
+{
+    return [
+        'meadow' => [
+            'name' => 'Crossroad Meadow',
+            'material' => 'Wild Essence',
+        ],
+        'ruins' => [
+            'name' => 'Sunken Ruins',
+            'material' => 'Ruin Fragment',
+        ],
+    ];
+}
+
 function gameTimeQuarterNames(): array
 {
     return ['Morning', 'Day', 'Afternoon', 'Night'];
@@ -100,7 +124,16 @@ function gameNewHeroState(): array
         'day_quarter' => 0,
         'quarter_stamina_spent' => 0,
         'bag_capacity' => $baseBagCapacity,
-        'location' => 'crossroad',
+        'location' => 'town',
+        'expedition' => [
+            'active' => false,
+            'route_id' => 'meadow',
+            'threat' => 0,
+            'wins' => 0,
+            'pending_gold' => 0,
+            'pending_xp' => 0,
+            'pending_loot' => [],
+        ],
         'inventory' => [],
         'equipped' => [
             'weapon' => null,
@@ -160,6 +193,198 @@ function gameGetBagUpgradeCost(array $hero): int
     $tiers = (int) max(0, floor(($currentCapacity - $baseBagCapacity) / $upgradeStep));
 
     return 15 + ($tiers * 10);
+}
+
+function gameEnsureExpeditionState(array &$hero): void
+{
+    if (!isset($hero['expedition']) || !is_array($hero['expedition'])) {
+        $hero['expedition'] = [];
+    }
+
+    $routes = gameRouteDefinitions();
+    $defaultRoute = (string) (array_key_first($routes) ?? 'meadow');
+
+    $hero['expedition']['active'] = !empty($hero['expedition']['active']);
+
+    $routeId = (string) ($hero['expedition']['route_id'] ?? $defaultRoute);
+    if (!isset($routes[$routeId])) {
+        $routeId = $defaultRoute;
+    }
+    $hero['expedition']['route_id'] = $routeId;
+
+    $hero['expedition']['threat'] = (int) max(0, min(gameExpeditionThreatCap(), (int) ($hero['expedition']['threat'] ?? 0)));
+    $hero['expedition']['wins'] = (int) max(0, (int) ($hero['expedition']['wins'] ?? 0));
+    $hero['expedition']['pending_gold'] = (int) max(0, (int) ($hero['expedition']['pending_gold'] ?? 0));
+    $hero['expedition']['pending_xp'] = (int) max(0, (int) ($hero['expedition']['pending_xp'] ?? 0));
+
+    if (!isset($hero['expedition']['pending_loot']) || !is_array($hero['expedition']['pending_loot'])) {
+        $hero['expedition']['pending_loot'] = [];
+    }
+
+    $normalizedLoot = [];
+    foreach ($hero['expedition']['pending_loot'] as $item) {
+        if (!is_array($item)) {
+            continue;
+        }
+
+        $normalizedLoot[] = [
+            'name' => (string) ($item['name'] ?? 'Unknown Material'),
+            'type' => (string) ($item['type'] ?? 'loot'),
+            'value' => (int) max(0, (int) ($item['value'] ?? 0)),
+        ];
+    }
+
+    $hero['expedition']['pending_loot'] = array_slice($normalizedLoot, 0, max(0, (int) ($hero['bag_capacity'] ?? gameBaseBagCapacity())));
+}
+
+function gameIsInTown(array $hero): bool
+{
+    return (string) ($hero['location'] ?? 'town') === 'town';
+}
+
+function gameGetTotalCarriedLootCount(array $hero): int
+{
+    $inventoryCount = is_array($hero['inventory'] ?? null) ? count($hero['inventory']) : 0;
+    $pendingCount = is_array($hero['expedition']['pending_loot'] ?? null) ? count($hero['expedition']['pending_loot']) : 0;
+
+    return $inventoryCount + $pendingCount;
+}
+
+function gameStartExpedition(array &$hero, string $routeId): void
+{
+    gameEnsureExpeditionState($hero);
+    $routes = gameRouteDefinitions();
+    if (!isset($routes[$routeId])) {
+        $routeId = (string) (array_key_first($routes) ?? 'meadow');
+    }
+
+    $hero['location'] = 'expedition';
+    $hero['expedition']['active'] = true;
+    $hero['expedition']['route_id'] = $routeId;
+}
+
+function gameGetThreatMultiplier(array $hero): float
+{
+    $threat = (int) ($hero['expedition']['threat'] ?? 0);
+
+    return 1 + (0.08 * $threat);
+}
+
+function gameGetRewardMultiplier(array $hero): float
+{
+    $threat = (int) ($hero['expedition']['threat'] ?? 0);
+
+    return 1 + (0.10 * $threat);
+}
+
+function gameAddPendingRewards(array &$hero, array $rewards): void
+{
+    gameEnsureExpeditionState($hero);
+    $hero['expedition']['pending_gold'] += (int) max(0, (int) ($rewards['gold'] ?? 0));
+    $hero['expedition']['pending_xp'] += (int) max(0, (int) ($rewards['xp'] ?? 0));
+
+    $loot = $rewards['loot'] ?? null;
+    if (is_array($loot)) {
+        $hero['expedition']['pending_loot'][] = [
+            'name' => (string) ($loot['name'] ?? 'Unknown Loot'),
+            'type' => (string) ($loot['type'] ?? 'loot'),
+            'value' => (int) max(0, (int) ($loot['value'] ?? 0)),
+        ];
+    }
+}
+
+function gameBankExpeditionRewards(array &$hero): void
+{
+    gameEnsureExpeditionState($hero);
+    $pendingGold = (int) ($hero['expedition']['pending_gold'] ?? 0);
+    $pendingXp = (int) ($hero['expedition']['pending_xp'] ?? 0);
+    $pendingLoot = $hero['expedition']['pending_loot'] ?? [];
+
+    $hero['gold'] += $pendingGold;
+    $leveledUp = false;
+    if ($pendingXp > 0) {
+        $leveledUp = gameGainExperience($hero, $pendingXp);
+    }
+
+    if (is_array($pendingLoot) && !empty($pendingLoot)) {
+        foreach ($pendingLoot as $item) {
+            $hero['inventory'][] = $item;
+        }
+    }
+
+    $hero['expedition']['pending_gold'] = 0;
+    $hero['expedition']['pending_xp'] = 0;
+    $hero['expedition']['pending_loot'] = [];
+
+    if ($leveledUp) {
+        gameAppendLog('You leveled up. The isekai is getting less hostile.');
+    }
+}
+
+function gameReturnToTown(array &$hero): void
+{
+    gameEnsureExpeditionState($hero);
+
+    $bankGold = (int) ($hero['expedition']['pending_gold'] ?? 0);
+    $bankXp = (int) ($hero['expedition']['pending_xp'] ?? 0);
+    $bankLoot = is_array($hero['expedition']['pending_loot'] ?? null) ? count($hero['expedition']['pending_loot']) : 0;
+
+    gameBankExpeditionRewards($hero);
+
+    $hero['expedition']['active'] = false;
+    $hero['expedition']['threat'] = 0;
+    $hero['expedition']['wins'] = 0;
+    $hero['location'] = 'town';
+
+    gameAppendLog('You returned to town. Banked ' . $bankGold . ' gold, ' . $bankXp . ' XP, and ' . $bankLoot . ' item(s).');
+}
+
+function gameFailExpedition(array &$hero): void
+{
+    gameEnsureExpeditionState($hero);
+
+    $pendingGold = (int) ($hero['expedition']['pending_gold'] ?? 0);
+    $lostGold = (int) floor($pendingGold * 0.5);
+    $keptGold = $pendingGold - $lostGold;
+
+    $pendingLoot = $hero['expedition']['pending_loot'] ?? [];
+    $lostLootName = null;
+    if (is_array($pendingLoot) && count($pendingLoot) > 0) {
+        $lostLootIndex = array_rand($pendingLoot);
+        $lostLootName = (string) ($pendingLoot[$lostLootIndex]['name'] ?? 'Loot');
+        unset($pendingLoot[$lostLootIndex]);
+        $pendingLoot = array_values($pendingLoot);
+    }
+
+    $hero['gold'] += max(0, $keptGold);
+    $pendingXp = (int) ($hero['expedition']['pending_xp'] ?? 0);
+    $leveledUp = false;
+    if ($pendingXp > 0) {
+        $leveledUp = gameGainExperience($hero, $pendingXp);
+    }
+
+    foreach ($pendingLoot as $item) {
+        $hero['inventory'][] = $item;
+    }
+
+    $hero['expedition']['active'] = false;
+    $hero['expedition']['threat'] = 0;
+    $hero['expedition']['wins'] = 0;
+    $hero['expedition']['pending_gold'] = 0;
+    $hero['expedition']['pending_xp'] = 0;
+    $hero['expedition']['pending_loot'] = [];
+    $hero['location'] = 'town';
+
+    $message = 'Expedition failed. Lost ' . $lostGold . ' pending gold';
+    if ($lostLootName !== null) {
+        $message .= ' and dropped ' . $lostLootName;
+    }
+    $message .= '. You kept ' . $pendingXp . ' pending XP.';
+    gameAppendLog($message);
+
+    if ($leveledUp) {
+        gameAppendLog('You leveled up. The isekai is getting less hostile.');
+    }
 }
 
 function gameEnsureTimeState(array &$hero): void
@@ -338,7 +563,16 @@ function gameHandleAction(?string $action, array $request, array $classDefinitio
         $hero['day_quarter'] = 0;
         $hero['quarter_stamina_spent'] = 0;
         $hero['bag_capacity'] = gameBaseBagCapacity();
-        $hero['location'] = 'crossroad';
+        $hero['location'] = 'town';
+        $hero['expedition'] = [
+            'active' => false,
+            'route_id' => 'meadow',
+            'threat' => 0,
+            'wins' => 0,
+            'pending_gold' => 0,
+            'pending_xp' => 0,
+            'pending_loot' => [],
+        ];
         $hero['inventory'] = [];
         $hero['equipped'] = ['weapon' => null, 'armor' => null];
         $hero['battle'] = null;
@@ -358,9 +592,39 @@ function gameHandleAction(?string $action, array $request, array $classDefinitio
     gameEnsureStaminaState($hero);
     gameEnsureTimeState($hero);
     gameEnsureBagState($hero);
+    gameEnsureExpeditionState($hero);
 
-    if (in_array($action, ['rest', 'sell', 'buy', 'expand_bag'], true)) {
-        $hero['location'] = 'town';
+    if ($action === 'select_route') {
+        if (!gameIsInTown($hero)) {
+            gameAppendLog('You can only change route while in town.');
+            return;
+        }
+
+        $routeId = (string) ($request['route_id'] ?? 'meadow');
+        $routes = gameRouteDefinitions();
+        if (!isset($routes[$routeId])) {
+            gameAppendLog('Invalid route selected.');
+            return;
+        }
+
+        $hero['expedition']['route_id'] = $routeId;
+        gameAppendLog('Route selected: ' . $routes[$routeId]['name'] . '.');
+        return;
+    }
+
+    if ($action === 'return_town') {
+        if (!($hero['expedition']['active'] ?? false)) {
+            gameAppendLog('You are already in town.');
+            return;
+        }
+
+        gameReturnToTown($hero);
+        return;
+    }
+
+    if (in_array($action, ['rest', 'sell', 'buy', 'expand_bag'], true) && !gameIsInTown($hero)) {
+        gameAppendLog('This action is only available in town. Return to town first.');
+        return;
     }
 
     $actionStaminaCost = [
@@ -382,8 +646,38 @@ function gameHandleAction(?string $action, array $request, array $classDefinitio
     }
 
     if ($action === 'hunt') {
-        $hero['location'] = 'hunting';
+        if (!($hero['expedition']['active'] ?? false)) {
+            gameStartExpedition($hero, (string) ($hero['expedition']['route_id'] ?? 'meadow'));
+            $routes = gameRouteDefinitions();
+            $routeId = (string) ($hero['expedition']['route_id'] ?? 'meadow');
+            $routeName = $routes[$routeId]['name'] ?? 'Unknown Route';
+            gameAppendLog('Expedition started at ' . $routeName . '.');
+        }
+
+        $hero['location'] = 'expedition';
+
+        $isEliteEncounter = ((int) ($hero['expedition']['wins'] ?? 0)) >= (gameExpeditionEliteInterval() - 1);
         $monster = $monsterPool[array_rand($monsterPool)];
+
+        if ($isEliteEncounter) {
+            usort($monsterPool, static function (array $a, array $b): int {
+                $aPower = ((int) ($a['attack'] ?? 0) * 2) + (int) ($a['defense'] ?? 0) + (int) ($a['magic'] ?? 0) + (int) ($a['speed'] ?? 0);
+                $bPower = ((int) ($b['attack'] ?? 0) * 2) + (int) ($b['defense'] ?? 0) + (int) ($b['magic'] ?? 0) + (int) ($b['speed'] ?? 0);
+
+                return $bPower <=> $aPower;
+            });
+            $monster = $monsterPool[0];
+            $monster['name'] = 'Elite ' . $monster['name'];
+            $monster['hp'] = (int) floor((int) $monster['hp'] * 1.2);
+        }
+
+        $threatMultiplier = gameGetThreatMultiplier($hero);
+        $monster['attack'] = (int) max(1, floor((int) $monster['attack'] * $threatMultiplier));
+        $monster['defense'] = (int) max(1, floor((int) $monster['defense'] * $threatMultiplier));
+        $monster['magic'] = (int) max(0, floor((int) $monster['magic'] * $threatMultiplier));
+        $monster['speed'] = (int) max(1, floor((int) $monster['speed'] * $threatMultiplier));
+        $monster['hp'] = (int) max(1, floor((int) $monster['hp'] * $threatMultiplier));
+
         $hero['battle'] = [
             'monster' => $monster,
             'current_hp' => (int) $monster['hp'],
@@ -399,35 +693,75 @@ function gameHandleAction(?string $action, array $request, array $classDefinitio
         if ($heroRoll >= $monsterRoll) {
             $goldGain = gameRandomRange($monster['gold']);
             $xpGain = gameRandomRange($monster['xp']);
+
+            $rewardMultiplier = gameGetRewardMultiplier($hero);
+            $goldGain = (int) max(1, floor($goldGain * $rewardMultiplier));
+            $xpGain = (int) max(1, floor($xpGain * $rewardMultiplier));
+
             $loot = $monster['loot'][array_rand($monster['loot'])];
 
-            $hero['gold'] += $goldGain;
-
             $lootAdded = false;
-            if (count($hero['inventory']) < (int) $hero['bag_capacity']) {
-                $hero['inventory'][] = [
-                    'name' => $loot,
-                    'type' => 'loot',
-                    'value' => gameRandomRange([2, 7]),
-                ];
+            if (gameGetTotalCarriedLootCount($hero) < (int) $hero['bag_capacity']) {
+                gameAddPendingRewards($hero, [
+                    'gold' => $goldGain,
+                    'xp' => $xpGain,
+                    'loot' => [
+                        'name' => $loot,
+                        'type' => 'loot',
+                        'value' => gameRandomRange([2, 7]),
+                    ],
+                ]);
                 $lootAdded = true;
+            } else {
+                gameAddPendingRewards($hero, [
+                    'gold' => $goldGain,
+                    'xp' => $xpGain,
+                ]);
             }
 
-            $leveledUp = gameGainExperience($hero, $xpGain);
+            $eliteMaterialAdded = false;
+            if ($isEliteEncounter && gameGetTotalCarriedLootCount($hero) < (int) $hero['bag_capacity']) {
+                $routeId = (string) ($hero['expedition']['route_id'] ?? 'meadow');
+                $routes = gameRouteDefinitions();
+                $materialName = (string) ($routes[$routeId]['material'] ?? 'Wild Essence');
+                gameAddPendingRewards($hero, [
+                    'loot' => [
+                        'name' => $materialName,
+                        'type' => 'material',
+                        'value' => 14,
+                    ],
+                ]);
+                $eliteMaterialAdded = true;
+            }
+
+            $hero['expedition']['wins'] = (int) ($hero['expedition']['wins'] ?? 0) + 1;
+            $hero['expedition']['threat'] = (int) min(gameExpeditionThreatCap(), (int) ($hero['expedition']['threat'] ?? 0) + 1);
+
             $hero['hp'] = max(1, $hero['hp'] - max(1, intdiv($damageTaken, 2)));
 
+            $pendingGold = (int) ($hero['expedition']['pending_gold'] ?? 0);
+            $pendingXp = (int) ($hero['expedition']['pending_xp'] ?? 0);
+            $pendingLootCount = count($hero['expedition']['pending_loot'] ?? []);
+
             if ($lootAdded) {
-                gameAppendLog('Victory over ' . $monster['name'] . '. +' . $goldGain . ' gold, +' . $xpGain . ' XP, item found: ' . $loot . '.');
+                gameAppendLog('Victory over ' . $monster['name'] . '. +' . $goldGain . ' gold and +' . $xpGain . ' XP are now pending. Loot found: ' . $loot . '.');
             } else {
-                gameAppendLog('Victory over ' . $monster['name'] . '. +' . $goldGain . ' gold, +' . $xpGain . ' XP. Bag is full, loot left behind.');
+                gameAppendLog('Victory over ' . $monster['name'] . '. +' . $goldGain . ' gold and +' . $xpGain . ' XP are now pending. Bag is full, loot left behind.');
             }
-            if ($leveledUp) {
-                gameAppendLog('You leveled up. The isekai is getting less hostile.');
+
+            if ($isEliteEncounter) {
+                if ($eliteMaterialAdded) {
+                    gameAppendLog('Elite reward secured: route material added to pending loot.');
+                } else {
+                    gameAppendLog('Elite reward found, but bag is full and material was left behind.');
+                }
             }
+
+            gameAppendLog('Threat is now ' . (int) $hero['expedition']['threat'] . '/' . gameExpeditionThreatCap() . '. Pending: ' . $pendingGold . ' gold, ' . $pendingXp . ' XP, ' . $pendingLootCount . ' item(s).');
         } else {
             $hero['hp'] = max(1, $hero['hp'] - max(3, $damageTaken));
-            $hero['gold'] = max(0, $hero['gold'] - 1);
             gameAppendLog('Partial defeat against ' . $monster['name'] . '. You escaped with ' . $hero['hp'] . ' HP.');
+            gameFailExpedition($hero);
         }
 
         return;
