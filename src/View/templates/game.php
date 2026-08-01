@@ -192,7 +192,8 @@ $renderFullShell = empty($isHtmxRequest ?? false);
                 </div>
             </div>
 
-            <div class="card scene-card">
+            <?php $sceneViewTab = 'monster'; ?>
+            <div class="card scene-card monster-only">
                 <?php
                     $threatCap = gameExpeditionThreatCap();
                     $currentThreat = (int) ($expedition['threat'] ?? 0);
@@ -269,18 +270,16 @@ $renderFullShell = empty($isHtmxRequest ?? false);
                 </div>
 
                 <div class="scene-tabs" role="tablist" aria-label="Scene views">
-                    <button type="button" class="scene-tab <?= ($activeSceneTab ?? 'scene') === 'scene' ? 'active' : '' ?>" data-scene-tab="scene" hx-post="<?= htmlspecialchars((string) ($_SERVER['SCRIPT_NAME'] ?? '/')) ?>" hx-target="#game-shell" hx-swap="outerHTML" hx-vals='{"action":"set_scene_tab","scene_tab":"scene"}'>Scenario</button>
-                    <button type="button" class="scene-tab <?= ($activeSceneTab ?? 'scene') === 'monster' ? 'active' : '' ?>" data-scene-tab="monster" hx-post="<?= htmlspecialchars((string) ($_SERVER['SCRIPT_NAME'] ?? '/')) ?>" hx-target="#game-shell" hx-swap="outerHTML" hx-vals='{"action":"set_scene_tab","scene_tab":"monster"}'>Monster</button>
-                    <button type="button" class="scene-tab <?= ($activeSceneTab ?? 'scene') === 'map' ? 'active' : '' ?>" data-scene-tab="map" hx-post="<?= htmlspecialchars((string) ($_SERVER['SCRIPT_NAME'] ?? '/')) ?>" hx-target="#game-shell" hx-swap="outerHTML" hx-vals='{"action":"set_scene_tab","scene_tab":"map"}'>Map</button>
+                    <button type="button" class="scene-tab active" data-scene-tab="monster" hx-post="<?= htmlspecialchars((string) ($_SERVER['SCRIPT_NAME'] ?? '/')) ?>" hx-target="#game-shell" hx-swap="outerHTML" hx-vals='{"action":"set_scene_tab","scene_tab":"monster"}'>Monster</button>
                 </div>
                 <div class="scene-viewport">
-                    <div class="scene-layer <?= ($activeSceneTab ?? 'scene') === 'scene' ? 'active' : '' ?>" data-scene-panel="scene">
+                    <div class="scene-layer" data-scene-panel="scene" hidden>
                         <div>
                             <h3 class="scene-title"><?= htmlspecialchars($sceneLabel) ?></h3>
                             <p class="scene-subtitle">A compact view of where the run is currently unfolding.</p>
                         </div>
                     </div>
-                    <div class="scene-layer <?= ($activeSceneTab ?? 'scene') === 'monster' ? 'active' : '' ?>" data-scene-panel="monster">
+                    <div class="scene-layer active" data-scene-panel="monster">
                         <div>
                             <h3 class="scene-title"><?= htmlspecialchars($currentMonster ?? 'No active monster') ?></h3>
                             <p class="scene-subtitle">Last notable encounter detected from your adventure log.</p>
@@ -306,7 +305,7 @@ $renderFullShell = empty($isHtmxRequest ?? false);
                             <?php endif; ?>
                         </div>
                     </div>
-                    <div class="scene-layer <?= ($activeSceneTab ?? 'scene') === 'map' ? 'active' : '' ?>" data-scene-panel="map">
+                    <div class="scene-layer" data-scene-panel="map" hidden>
                         <div>
                             <h3 class="scene-title">Route Grid</h3>
                             <?php if (!empty($isInTown)): ?>

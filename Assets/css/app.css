@@ -699,6 +699,28 @@ button.ghost {
     min-height: 0;
 }
 
+.scene-card.monster-only {
+    grid-template-rows: auto auto 1fr auto;
+}
+
+.scene-card.monster-only .scene-tabs {
+    margin-top: -2px;
+}
+
+.scene-card.monster-only .scene-viewport {
+    min-height: 260px;
+    padding: 10px;
+}
+
+.scene-card.monster-only .monster-portrait {
+    margin-top: 6px;
+}
+
+.scene-card.monster-only .scene-subtitle {
+    max-width: 38ch;
+    margin: 0 auto;
+}
+
 .expedition-mode {
     display: grid;
     grid-template-columns: auto 1fr;
@@ -748,6 +770,19 @@ button.ghost {
     border: 1px solid var(--border);
     padding: 8px;
     background: var(--panel-alt);
+}
+
+.expedition-status .meta-chip {
+    display: grid;
+    justify-content: start;
+    align-content: start;
+    gap: 2px;
+}
+
+.expedition-status .meta-chip strong {
+    display: block;
+    white-space: normal;
+    line-height: 1.1;
 }
 
 .threat-wrap {
