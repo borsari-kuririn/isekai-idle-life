@@ -200,7 +200,7 @@ html.time-shift .log-entry {
     border: 2px solid var(--border);
     border-radius: 0;
     background: color-mix(in srgb, var(--panel) 94%, transparent);
-    padding: 10px;
+    padding: 8px;
     min-height: 0;
 }
 
@@ -500,7 +500,74 @@ html.time-shift .log-entry {
 .panel {
     display: grid;
     gap: 8px;
+    align-content: start;
     min-height: 0;
+}
+
+.player-status-card {
+    gap: 6px;
+}
+
+.player-status-card .hero-head {
+    gap: 8px;
+}
+
+.player-status-card .hero-name {
+    font-size: 1.22rem;
+}
+
+.player-status-card .hero-class,
+.player-status-card .hero-title {
+    font-size: 0.94rem;
+}
+
+.player-status-card .hero-desc {
+    font-size: 0.72rem;
+    line-height: 1.16;
+}
+
+.player-status-card .class-portrait-hero {
+    width: 128px;
+    height: 128px;
+}
+
+.player-status-card .status-block {
+    margin: 4px 0 0;
+}
+
+.player-status-card .hud-meta {
+    font-size: 0.82rem;
+}
+
+.player-status-card .meta-chip {
+    padding: 5px 7px 3px;
+    font-size: 0.82rem;
+}
+
+.player-status-card .stat {
+    padding: 6px;
+}
+
+.player-status-card .stat span {
+    font-size: 0.92rem;
+}
+
+.player-status-card .stat strong {
+    font-size: 1.9rem;
+    line-height: 1;
+}
+
+.player-status-card .item-card {
+    padding: 5px 7px;
+}
+
+.player-status-card .item-card strong {
+    font-size: 1.04rem;
+    line-height: 1;
+}
+
+.player-status-card .item-card small {
+    font-size: 0.96rem;
 }
 
 .form-row,
@@ -632,8 +699,127 @@ button.ghost {
     min-height: 0;
 }
 
+.expedition-mode {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 8px;
+    align-items: start;
+    border: 1px solid var(--border);
+    background: var(--panel-alt);
+    padding: 6px 8px;
+}
+
+.expedition-mode strong {
+    display: block;
+    font-size: 0.86rem;
+    line-height: 1;
+    color: var(--text);
+}
+
+.expedition-mode small {
+    display: block;
+    margin-top: 3px;
+    font-size: 0.72rem;
+    line-height: 1.2;
+    color: var(--muted);
+}
+
+.mode-dot {
+    width: 9px;
+    height: 9px;
+    margin-top: 3px;
+    border: 1px solid var(--border);
+    background: var(--panel-deep);
+}
+
+.mode-town .mode-dot {
+    background: #5a5a5a;
+}
+
+.mode-expedition .mode-dot {
+    background: #c8d2e0;
+}
+
 .scene-actions {
     margin-bottom: 2px;
+}
+
+.expedition-status {
+    border: 1px solid var(--border);
+    padding: 8px;
+    background: var(--panel-alt);
+}
+
+.threat-wrap {
+    display: grid;
+    gap: 4px;
+}
+
+.threat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.threat-meter {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 4px;
+}
+
+.threat-step {
+    height: 10px;
+    border: 1px solid var(--border);
+    background: var(--panel-deep);
+}
+
+.threat-step.is-active {
+    background: #9aa8bb;
+}
+
+.threat-step.is-elite.is-active {
+    background: #e5edf9;
+}
+
+.pending-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 5px;
+}
+
+.pending-chip {
+    border: 1px solid var(--border);
+    background: var(--panel);
+    padding: 4px 6px 3px;
+    display: grid;
+    gap: 1px;
+}
+
+.pending-chip span {
+    font-size: 0.66rem;
+    font-weight: 700;
+    color: var(--muted);
+}
+
+.pending-chip strong {
+    font-size: 0.84rem;
+    color: var(--text);
+    line-height: 1;
+}
+
+.elite-warning,
+.town-lock-note {
+    margin: 0;
+    font-size: 0.74rem;
+    line-height: 1.25;
+    color: var(--text);
+}
+
+.elite-warning {
+    font-weight: 700;
 }
 
 .scene-tabs {
@@ -864,7 +1050,8 @@ button.ghost {
     .stats,
     .status-primary,
     .status-meta,
-    .shop-grid {
+    .shop-grid,
+    .pending-grid {
         grid-template-columns: 1fr;
     }
 

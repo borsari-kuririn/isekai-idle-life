@@ -340,3 +340,30 @@ This file stores historical user-flow tests for future agent runs.
   1. Ask the Game Design Agent to resolve the open F1 balance questions and simulate Threat/reward/loss values before implementation.
   2. Implement expedition state and explicit Return to Town as the first small feature slice.
   3. Repeat this exact four-cycle policy after F1 and compare win rate, level, gold, return decisions, and loss events against this baseline.
+
+### Date: 2026-07-31
+- Agent: Player Simulation Agent
+- Environment: Windows, PHP 8.3.32 built-in server at `http://localhost:8000`, Playwright integrated browser, HTMX 2.0.4
+- Flow Name: F1 expedition concept scenarios, settlement, reload, and Elite cadence
+- Steps:
+  - [PASS] Confirmed PHP 8.3.32 and started the local server at `http://localhost:8000` before opening a fresh browser page.
+  - [BLOCKED] Initial Playwright class-card and submit locator attempts timed out or lost the page despite visible controls; resumed in a clean page by invoking the visible Brawler label and form submit events.
+  - [PASS] Created fresh level-1 Brawler `Scenario Brawler` with 20 gold, 100 stamina, no loot, and inactive expedition state.
+  - [PASS] First expedition victory spent 3 stamina, kept banked gold/XP/inventory unchanged, and produced Threat 1 with 9 pending gold, 8 pending XP, and one pending item.
+  - [PASS] Submitted a crafted Rest request during the expedition; the server returned HTTP 200, logged the town-only restriction, and preserved HP, stamina, gold, bag, Threat, wins, and pending rewards.
+  - [PASS] Voluntary Return banked 9 gold, 8 XP, and one item exactly once, reset Threat/wins/pending state, returned to town, preserved the URL, and left one `#game-shell`.
+  - [PASS] Repeated Return through a direct request; all resources remained unchanged and the game logged `You are already in town.`
+  - [PASS] Observed a fresh first-encounter Skeleton defeat return the hero to town without negative or duplicated pending values.
+  - [PASS] Reloaded during a later active expedition and confirmed mode, HP, stamina, Threat, wins, route, banked resources, and all pending rewards survived unchanged.
+  - [FAIL] Returning with 22/34 HP and enough pending XP to level produced level 2 at 40/40 HP, confirming that settlement currently grants a free full heal.
+  - [PASS] At four wins the UI displayed an Elite warning; encounter five was `Elite Skeleton`, and a later successful retry awarded the route material.
+  - [PASS] A failed Elite settlement with 24 pending gold, 31 pending XP, and four pending items lost 12 gold and one item, preserved all XP, and banked the retained rewards as configured.
+  - [FAIL] The sixth encounter after an Elite victory was also `Elite Skeleton`, awarded another route material, and kept the Elite warning visible; current threshold logic makes every encounter after win four Elite.
+  - [FAIL] With five banked items and eight pending items, the main BAG HUD still displayed `5/20` instead of carried occupancy `13/20`.
+  - [FAIL] Exact `0..8` combat-roll enumeration showed severe fresh-class asymmetry: average Threat-0 win probability ranged from 79.6% for Brawler to 31.8% for Bard, while forced Skeleton Elite matchups can reach 0% at high Threat.
+  - [PASS] Expanded `docs/features/F1-expedition-risk-and-return.md` with fourteen player scenarios, revised formulas, state invariants, edge cases, a scenario test matrix, and all-class balance gates.
+- Outcome Summary: The core pending-reward and voluntary-Return loop works and produces a real push-your-luck decision, including correct reload continuity, town locking, loss settlement, and idempotent Return behavior. The current implementation is not ready for balanced acceptance because settlement XP can replace Rest with a full heal, Elite encounters repeat on every post-cap Hunt, carried bag occupancy is hidden, and weak classes face much harsher or impossible risk states. The F1 document now records a conditional-go contract with specific revisions and reproducible acceptance scenarios.
+- Follow-up Actions:
+  1. Change Elite cadence to every fifth encounter, preserve absolute HP through XP settlement, show combined carried bag occupancy, and prioritize Elite material when only one slot remains.
+  2. Apply Threat to aggregate monster power with deterministic rounding and stop multiplying XP in F1.
+  3. Automate the F1-S01 through F1-S14 scenario matrix and run seeded all-class balance simulations before marking the feature complete.

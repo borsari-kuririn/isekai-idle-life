@@ -136,7 +136,7 @@ $renderFullShell = empty($isHtmxRequest ?? false);
         </section>
     <?php else: ?>
         <section class="dashboard">
-            <div class="card panel">
+            <div class="card panel player-status-card">
                 <div class="hero-head">
                     <div class="class-portrait class-portrait-hero" aria-hidden="true">
                         <img src="<?= htmlspecialchars((string) ($classInfo['image'] ?? '')) ?>" alt="<?= htmlspecialchars((string) ($classInfo['name'] ?? 'Class')) ?> portrait" onerror="this.style.display='none'">
@@ -193,6 +193,22 @@ $renderFullShell = empty($isHtmxRequest ?? false);
             </div>
 
             <div class="card scene-card">
+                <?php
+                    $threatCap = gameExpeditionThreatCap();
+                    $currentThreat = (int) ($expedition['threat'] ?? 0);
+                    $pendingGold = (int) ($expedition['pending_gold'] ?? 0);
+                    $pendingXp = (int) ($expedition['pending_xp'] ?? 0);
+                    $pendingLootCount = count($expedition['pending_loot'] ?? []);
+                    $isAtEliteThreshold = $currentThreat >= max(0, $threatCap - 1);
+                ?>
+                <div class="expedition-mode <?= !empty($isInTown) ? 'mode-town' : 'mode-expedition' ?>">
+                    <span class="mode-dot" aria-hidden="true"></span>
+                    <div>
+                        <strong><?= !empty($isInTown) ? 'Town Mode' : 'Expedition Mode' ?></strong>
+                        <small><?= !empty($isInTown) ? 'Prepare route, shop, and recovery actions before leaving town.' : 'You are outside town. Bank rewards with Return to Town when ready.' ?></small>
+                    </div>
+                </div>
+
                 <div class="btn-row scene-actions">
                     <form method="post" hx-post="<?= htmlspecialchars((string) ($_SERVER['SCRIPT_NAME'] ?? '/')) ?>" hx-target="#game-shell" hx-swap="outerHTML">
                         <input type="hidden" name="action" value="hunt">
@@ -219,20 +235,36 @@ $renderFullShell = empty($isHtmxRequest ?? false);
                 </div>
 
                 <div class="panel expedition-status">
-                    <?php $pendingLootCount = count($expedition['pending_loot'] ?? []); ?>
                     <h3>Expedition Status</h3>
                     <div class="status-meta">
                         <div class="meta-chip"><span>ROUTE</span><strong><?= htmlspecialchars((string) ($selectedRoute['name'] ?? 'Crossroad Meadow')) ?></strong></div>
-                        <div class="meta-chip"><span>THREAT</span><strong><?= (int) ($expedition['threat'] ?? 0) ?>/<?= gameExpeditionThreatCap() ?></strong></div>
+                        <div class="meta-chip"><span>LOCATION</span><strong><?= !empty($isInTown) ? 'TOWN' : 'FIELD' ?></strong></div>
                         <div class="meta-chip"><span>WINS</span><strong><?= (int) ($expedition['wins'] ?? 0) ?></strong></div>
                     </div>
-                    <div class="status-meta">
-                        <div class="meta-chip"><span>PENDING GOLD</span><strong><?= (int) ($expedition['pending_gold'] ?? 0) ?></strong></div>
-                        <div class="meta-chip"><span>PENDING XP</span><strong><?= (int) ($expedition['pending_xp'] ?? 0) ?></strong></div>
-                        <div class="meta-chip"><span>PENDING LOOT</span><strong><?= $pendingLootCount ?></strong></div>
+
+                    <div class="threat-wrap" aria-label="Threat progression">
+                        <div class="threat-header">
+                            <span>THREAT</span>
+                            <strong><?= $currentThreat ?>/<?= $threatCap ?></strong>
+                        </div>
+                        <div class="threat-meter" role="img" aria-label="Threat level <?= $currentThreat ?> out of <?= $threatCap ?>">
+                            <?php for ($i = 1; $i <= $threatCap; $i++): ?>
+                                <span class="threat-step<?= $i <= $currentThreat ? ' is-active' : '' ?><?= $i === $threatCap ? ' is-elite' : '' ?>"></span>
+                            <?php endfor; ?>
+                        </div>
                     </div>
-                    <?php if ((int) ($expedition['threat'] ?? 0) >= (gameExpeditionEliteInterval() - 1)): ?>
-                        <p class="scene-subtitle">Elite warning: next victory encounter is elite level.</p>
+
+                    <div class="pending-grid">
+                        <div class="pending-chip"><span>PENDING GOLD</span><strong><?= $pendingGold ?></strong></div>
+                        <div class="pending-chip"><span>PENDING XP</span><strong><?= $pendingXp ?></strong></div>
+                        <div class="pending-chip"><span>PENDING LOOT</span><strong><?= $pendingLootCount ?></strong></div>
+                    </div>
+
+                    <?php if ($isAtEliteThreshold): ?>
+                        <p class="elite-warning">Elite warning: next victory encounter is elite level.</p>
+                    <?php endif; ?>
+                    <?php if (empty($isInTown)): ?>
+                        <p class="town-lock-note">Town actions are disabled outside town. Use Return to Town to bank rewards and reopen market actions.</p>
                     <?php endif; ?>
                 </div>
 

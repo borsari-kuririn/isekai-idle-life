@@ -26,6 +26,21 @@ function gameExpeditionThreatCap(): int
     return 5;
 }
 
+function gameExpeditionThreatPowerStep(): float
+{
+    return 0.08;
+}
+
+function gameExpeditionRewardStep(): float
+{
+    return 0.10;
+}
+
+function gameExpeditionPendingGoldLossRate(): float
+{
+    return 0.50;
+}
+
 function gameExpeditionEliteInterval(): int
 {
     return 5;
@@ -487,14 +502,14 @@ function gameGetThreatMultiplier(array $hero): float
 {
     $threat = (int) ($hero['expedition']['threat'] ?? 0);
 
-    return 1 + (0.08 * $threat);
+    return 1 + (gameExpeditionThreatPowerStep() * $threat);
 }
 
 function gameGetRewardMultiplier(array $hero): float
 {
     $threat = (int) ($hero['expedition']['threat'] ?? 0);
 
-    return 1 + (0.10 * $threat);
+    return 1 + (gameExpeditionRewardStep() * $threat);
 }
 
 function gameAddPendingRewards(array &$hero, array $rewards): void
@@ -574,7 +589,7 @@ function gameFailExpedition(array &$hero): void
     gameEnsureExpeditionState($hero);
 
     $pendingGold = (int) ($hero['expedition']['pending_gold'] ?? 0);
-    $lostGold = (int) floor($pendingGold * 0.5);
+    $lostGold = (int) floor($pendingGold * gameExpeditionPendingGoldLossRate());
     $keptGold = $pendingGold - $lostGold;
 
     $pendingLoot = $hero['expedition']['pending_loot'] ?? [];
