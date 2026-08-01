@@ -6,6 +6,7 @@ session_start();
 require_once __DIR__ . '/src/Data/Classes.php';
 require_once __DIR__ . '/src/Data/Equipment.php';
 require_once __DIR__ . '/src/Data/Monsters.php';
+require_once __DIR__ . '/src/Data/Loot.php';
 require_once __DIR__ . '/src/Game/Engine.php';
 
 require_once __DIR__ . '/src/Model/GameDataProvider.php';

@@ -17,4 +17,14 @@ final class GameDataProvider
     {
         return gameMonsterPool();
     }
+
+    public function lootCatalog(): array
+    {
+        return gameLootCatalog();
+    }
+
+    public function craftRecipes(): array
+    {
+        return gameCraftingRecipes();
+    }
 }
