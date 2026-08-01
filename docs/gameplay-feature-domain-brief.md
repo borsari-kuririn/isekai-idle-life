@@ -8,6 +8,16 @@
 - Runtime target: PHP 8+, server-rendered HTMX interface, session state with cookie fallback, no database
 - Primary recommendation: add an expedition risk-and-return loop before adding more content volume
 
+## Feature Specification Files
+
+- F1: `docs/features/F1-expedition-risk-and-return.md`
+- F2: `docs/features/F2-routes-zones-and-bosses.md`
+- F3: `docs/features/F3-time-phase-gameplay-modifiers.md`
+- F4: `docs/features/F4-economy-and-equipment-progression.md`
+- F5: `docs/features/F5-class-passives-and-mastery.md`
+- F6: `docs/features/F6-contract-board.md`
+- F7: `docs/features/F7-loot-materials-and-recipes.md`
+
 ## 1. Purpose
 
 This document translates a sustained player simulation into a technical gameplay roadmap. It defines the observed player problems, proposes feature options, selects a recommended first mechanic, and maps each feature to the current domain boundaries.
@@ -672,3 +682,304 @@ The Game Design Agent should resolve these before F1 implementation:
 7. What percentage of starting runs should reach Threat 3 before returning?
 
 Default recommendation: preserve XP, make Elite mandatory if the player continues, count all carried loot against one bag, preserve HP, multiply modifiers in one documented order, target level 2-3 after ten Hunts, and tune for approximately 60% of new runs to attempt Threat 3.
+
+## 18. Feature Breakdown and Expanded Specifications
+
+This section reorganizes the roadmap into implementation-ready feature contracts.
+
+### F1. Expedition Risk and Return (P0)
+
+#### Implementation Goal
+
+Introduce commitment and risk to repeated Hunts by moving rewards to a pending pool and forcing explicit Return decisions.
+
+#### Dependencies
+
+- None. This is the foundation feature.
+
+#### State Contract
+
+- Required hero keys:
+    - `location: 'town' | 'expedition'`
+    - `expedition.active: bool`
+    - `expedition.route_id: string`
+    - `expedition.threat: int [0..5]`
+    - `expedition.wins: int >= 0`
+    - `expedition.pending_gold: int >= 0`
+    - `expedition.pending_xp: int >= 0`
+    - `expedition.pending_loot: array`
+
+#### Action Contract
+
+- `hunt`
+    - Preconditions: hero created, stamina available.
+    - Behavior: starts expedition if inactive; resolves combat; writes pending rewards.
+    - Postconditions: updates `threat`, `wins`, pending fields, `location='expedition'`.
+- `return_town`
+    - Preconditions: expedition active.
+    - Behavior: bank pending rewards once, reset threat/wins.
+    - Postconditions: pending fields zeroed, `location='town'`, `expedition.active=false`.
+- `select_route`
+    - Preconditions: in town.
+    - Behavior: route update only.
+    - Postconditions: route id persisted.
+
+#### Rule Formulas
+
+- Threat multiplier:
+
+$$
+M_{threat} = 1 + (0.08 \times threat)
+$$
+
+- Pending reward multiplier:
+
+$$
+M_{reward} = 1 + (0.10 \times threat)
+$$
+
+- Defeat pending gold loss:
+
+$$
+gold_{lost} = \lfloor pending\_gold \times 0.5 \rfloor
+$$
+
+#### Validation Rules
+
+- Town-only actions outside town do not mutate resources and do not consume stamina.
+- Repeat Return calls cannot duplicate rewards.
+- Threat never exceeds cap 5.
+- Elite trigger at the fifth consecutive victory.
+
+#### Definition of Done
+
+- All F1 acceptance criteria in section 6 pass.
+- 20-hunt sample includes at least one voluntary Return.
+
+### F2. Routes, Zones, and Bosses (P1)
+
+#### Implementation Goal
+
+Turn the Map from decorative into gameplay selection with route-specific encounter pools and progression rewards.
+
+#### Dependencies
+
+- Requires F1 route-aware expedition state.
+
+#### State Contract
+
+- `route_id: string`
+- `route_progress: map<route_id, { elite_wins: int, boss_defeated: bool }>`
+
+#### Action Contract
+
+- `select_route`
+    - Preconditions: in town, route unlocked.
+    - Postconditions: route id updated only.
+- `hunt`
+    - Behavior extension: selects monster from current route pool only.
+
+#### Validation Rules
+
+- Crafted request with locked route id must fail safely.
+- Boss rewards must be one-time idempotent grants.
+
+#### Definition of Done
+
+- Route pool isolation validated in playtests.
+- Boss progress survives reload and cookie fallback.
+
+### F3. Time-Phase Gameplay Modifiers (P1)
+
+#### Implementation Goal
+
+Convert Morning/Day/Afternoon/Night into strategic windows that change action value.
+
+#### Dependencies
+
+- Works best after F1 because pending rewards can be phase-sensitive.
+
+#### State Contract
+
+- Uses existing `day` and `day_quarter`.
+- No extra persisted branch required for first release.
+
+#### Modifier Contract
+
+- Morning: XP multiplier 1.10
+- Day: Shop discount 10%
+- Afternoon: Sell value multiplier 1.15
+- Night: Monster power multiplier 1.15 and pending gold multiplier 1.25
+
+#### Calculation Rule
+
+$$
+value' = \lfloor value \times multiplier \rfloor
+$$
+
+#### Validation Rules
+
+- Modifiers are applied server-side only.
+- Rest-driven phase changes stay synchronized with HTMX shell metadata.
+
+#### Definition of Done
+
+- Each phase has visible effect and verified arithmetic outputs.
+
+### F4. Economy and Equipment Progression (P1)
+
+#### Implementation Goal
+
+Delay equipment saturation and create durable sinks through ownership, unlocks, and upgrades.
+
+#### Dependencies
+
+- Can be implemented alongside F1, independent from F2/F3.
+
+#### State Contract
+
+- `owned_equipment: string[]`
+- `equipment_upgrades: map<item_id, level 0..3>`
+- `equipped: { weapon: ?string, armor: ?string }`
+
+#### Action Contract
+
+- `buy`
+    - Preconditions: unlock level met, materials available, not already owned.
+    - Postconditions: spend once, add ownership, optional auto-equip when slot empty.
+- `equip`
+    - Preconditions: item owned.
+    - Postconditions: slot assignment only.
+- `upgrade_equipment`
+    - Preconditions: item owned, level < 3, gold available.
+    - Postconditions: consume gold, increase level by one.
+
+#### Upgrade Formula
+
+$$
+upgrade\_cost(level) = base\_price \times (level + 1)
+$$
+
+#### Validation Rules
+
+- Duplicate Buy attempts fail with no stamina/gold spend.
+- Equip does not re-charge purchase price.
+- Upgrade level is clamped to 3.
+
+#### Definition of Done
+
+- Unlock and duplicate-buy protections pass crafted-request tests.
+
+### F5. Class Passives and Mastery (P1)
+
+#### Implementation Goal
+
+Make classes mechanically distinct in repeated loops.
+
+#### Dependencies
+
+- Strongest synergy after F1 and F2.
+
+#### State Contract
+
+- `mastery_points: int [0..20]`
+- Optional passive counters per class where needed.
+
+#### Action and Trigger Contract
+
+- Passives resolve on existing actions (hunt, defeat, return, rest) with explicit log lines.
+- Mastery +1 on successful return at Threat >= 3.
+
+#### Validation Rules
+
+- Every passive must generate observable feedback in logs or HUD.
+- Legacy heroes must default safely with no missing-key errors.
+
+#### Definition of Done
+
+- One focused playtest pass per class confirms passive behavior.
+
+### F6. Contract Board (P2)
+
+#### Implementation Goal
+
+Provide medium-term objectives after early gearing.
+
+#### Dependencies
+
+- Benefits from F2 route variety and F3 phase modifiers.
+
+#### State Contract
+
+- `contracts.day: int`
+- `contracts.active_id: ?string`
+- `contracts.items: array<{ id, progress, target, complete }>`
+
+#### Generation Contract
+
+- Deterministic by `(day, class, slot)` to prevent reload rerolls.
+
+#### Validation Rules
+
+- Contract completion and claim are idempotent.
+- Expired contracts remain claimable if completed before rollover.
+
+#### Definition of Done
+
+- Repeated reloads keep identical contract set for a given day.
+
+### F7. Loot Materials and Recipes (P2)
+
+#### Implementation Goal
+
+Replace sell-everything dominance with recipe and material decisions.
+
+#### Dependencies
+
+- Works standalone but compounds value with F4 item progression.
+
+#### State Contract
+
+- Inventory entries must store stable loot IDs.
+- Optional compact recipe progress markers if needed later.
+
+#### Action Contract
+
+- `sell`
+    - Quick action to sell only common loot.
+- `sell_item`
+    - Sell targeted item id and quantity.
+- `craft_item`
+    - Atomic validate-then-consume behavior.
+
+#### Validation Rules
+
+- Craft failure consumes nothing.
+- Inventory mutations are atomic and deterministic.
+- Bag capacity checks include crafted and acquired items.
+
+#### Definition of Done
+
+- Crafting path and selective sell path both pass matrix tests.
+
+## 19. Cross-Feature Specification Matrix
+
+| Feature | New state keys | New actions | Primary risk | Mandatory test focus |
+|---|---|---|---|---|
+| F1 | expedition branch, location | select_route, return_town | reward duplication | return idempotency, defeat loss |
+| F2 | route_progress | select_route validation | invalid route exploits | route lock crafted requests |
+| F3 | none (phase uses existing state) | none required | desync between phase and effects | phase arithmetic and HTMX sync |
+| F4 | owned_equipment, equipment_upgrades | equip, upgrade_equipment | duplicate purchase inflation | buy/equip separation |
+| F5 | mastery and passive counters | none required | hidden passive behavior | class-specific trigger checks |
+| F6 | contracts branch | activate/claim optional | reroll exploit on reload | deterministic generation |
+| F7 | stable loot IDs in inventory | sell_item, craft_item | non-atomic consume bugs | atomic craft failure cases |
+
+## 20. Updated Delivery Slice Recommendations
+
+1. Complete F1 stabilization and run the full required matrix.
+2. Add F4 and F7 together to immediately create economy sinks.
+3. Add F2 route pool separation before contracts.
+4. Add F3 modifiers and validate interaction with threat/rewards.
+5. Add F5 passives and then F6 contract board.
+
+This order keeps implementation risk low while maximizing gameplay impact per milestone.
